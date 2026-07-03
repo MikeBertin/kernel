@@ -27,6 +27,7 @@ void vga_put_hex(uint32_t n);                 // 0x-prefixed hex at the cursor
 // Positioned write that does not disturb the streaming cursor — used for
 // status readouts like the uptime clock.
 void vga_puts_at(size_t row, size_t col, const char *s);
+void vga_set_cursor(size_t row, size_t col);   // move the streaming cursor
 
 uint8_t vga_get_color(void);                  // current packed colour byte
 void    vga_set_color_raw(uint8_t packed);    // restore a packed colour byte

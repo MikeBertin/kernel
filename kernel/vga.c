@@ -82,3 +82,8 @@ void vga_puts_at(size_t row, size_t col, const char *s) {
 
 uint8_t vga_get_color(void) { return color; }
 void    vga_set_color_raw(uint8_t packed) { color = packed; }
+
+void vga_set_cursor(size_t row, size_t col) {
+    cursor_row = row;
+    cursor_col = col;
+}

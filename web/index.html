@@ -61,7 +61,7 @@
 <body>
   <div class="wrap">
     <h1><span class="prompt">$</span> KERNEL</h1>
-    <p class="sub">A from-scratch x86 operating system — hand-written boot sector, protected mode, interrupts, and virtual memory. Booting live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image runs in QEMU.</p>
+    <p class="sub">A from-scratch x86 operating system — hand-written boot sector, protected mode, interrupts, virtual memory, and pre-emptive multitasking. Booting live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image runs in QEMU.</p>
 
     <div class="crt">
       <div id="screen_container"><div></div><canvas></canvas></div>
@@ -239,8 +239,32 @@ asm("mov %0, %%cr0" :: "r"(cr0));</code></pre>
 }</code></pre>
     </div>
 
+    <!-- 10 -->
+    <div class="step">
+      <header>
+        <span class="tag">10 · multitasking</span>
+        <h3>What a context switch actually is</h3>
+        <p>Startlingly small. Save the outgoing task's registers, stash its stack pointer, load the next task's, restore its registers — the final <em>ret</em> resumes it exactly where it left off. Driven by the timer IRQ, this is pre-emptive multitasking: the three counters climbing in the boot screen above are three tasks being frozen and thawed, hundreds of times a second.</p>
+      </header>
+      <span class="file">kernel/switch.asm</span>
+      <pre><code data-lang="asm">context_switch:            ; (uint32_t *save_old_esp, uint32_t new_esp)
+    mov eax, [esp + 4]     ; where to save the outgoing esp
+    mov edx, [esp + 8]     ; the incoming task's saved esp
+    push ebp               ; preserve the callee-saved registers
+    push ebx
+    push esi
+    push edi
+    mov [eax], esp         ; freeze the outgoing task
+    mov esp, edx           ; adopt the incoming task's stack
+    pop edi                ; restore its registers
+    pop esi
+    pop ebx
+    pop ebp
+    ret                    ; ...and resume it where it last left off</code></pre>
+    </div>
+
     <footer>
-      Milestone 3 of 6 — next: pre-emptive scheduling, then a userspace shell.<br>
+      Milestone 4 of 6 — next: a system-call boundary and a userspace shell.<br>
       Built by hand in C and x86 assembly. No Linux, no libraries underneath.
     </footer>
   </div>

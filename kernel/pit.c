@@ -10,8 +10,10 @@
 
 static volatile uint32_t ticks;
 static uint32_t frequency;
+static void (*tick_hook)(void);
 
 uint32_t pit_ticks(void) { return ticks; }
+void pit_set_tick_hook(void (*fn)(void)) { tick_hook = fn; }
 
 // Tiny unsigned-to-decimal — no libc here.
 static void utoa(uint32_t v, char *buf) {
@@ -43,6 +45,10 @@ static void timer_callback(registers_t *r) {
         vga_puts_at(0, 62, line);
         vga_set_color_raw(saved);
     }
+
+    // Drive the scheduler (if one is installed). This is the last thing we do:
+    // it may switch stacks and not return here until this task runs again.
+    if (tick_hook) tick_hook();
 }
 
 void pit_init(uint32_t frequency_hz) {

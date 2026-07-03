@@ -1,8 +1,8 @@
 // kernel/kmain.c — the kernel's C entry point.
 //
-// The story so far: protected mode (M1), interrupts (M2), and now memory
-// management (M3) — a physical frame allocator, paging, and a heap. Each step
-// prints what it did so the boot is a narrated tour of the machine coming up.
+// The story so far: protected mode (M1), interrupts (M2), memory management
+// (M3), and now pre-emptive multitasking (M4). Each step narrates itself; then
+// three tasks run "at once", time-sliced by the timer.
 #include "vga.h"
 #include "idt.h"
 #include "pit.h"
@@ -10,6 +10,7 @@
 #include "pmm.h"
 #include "paging.h"
 #include "heap.h"
+#include "sched.h"
 
 static void ok(const char *label) {
     vga_set_color(VGA_LIGHT_GREEN, VGA_BLACK);
@@ -19,70 +20,78 @@ static void ok(const char *label) {
     vga_putc('\n');
 }
 
+static void utoa(uint32_t v, char *b) {
+    char t[11];
+    int i = 0;
+    if (!v) { b[0] = '0'; b[1] = 0; return; }
+    while (v) { t[i++] = (char)('0' + v % 10); v /= 10; }
+    int j = 0;
+    while (i) b[j++] = t[--i];
+    b[j] = 0;
+}
+
+// A worker task: spin forever incrementing a counter and redrawing it in place.
+// The task never yields — only the timer pre-empting it lets the others run, so
+// three counters climbing together is proof of pre-emptive multitasking.
+static void worker(size_t row, const char *name) {
+    static const char spin[4] = {'|', '/', '-', '\\'};
+    uint32_t n = 0;
+    for (;;) {
+        n++;
+        char buf[48];
+        int p = 0;
+        for (const char *s = name; *s; s++) buf[p++] = *s;
+        buf[p++] = ':'; buf[p++] = ' ';
+        char num[11];
+        utoa(n, num);
+        for (int k = 0; num[k]; k++) buf[p++] = num[k];
+        buf[p++] = ' '; buf[p++] = spin[(n >> 3) & 3]; buf[p] = 0;
+
+        vga_puts_at(row, 4, buf);
+        for (volatile uint32_t d = 0; d < 400000; d++) { /* burn time */ }
+    }
+}
+
+static void task_a(void) { worker(11, "task A"); }
+static void task_b(void) { worker(12, "task B"); }
+static void task_c(void) { worker(13, "task C"); }
+
 void kmain(void) {
     vga_init();
 
     vga_set_color(VGA_LIGHT_GREEN, VGA_BLACK);
-    vga_puts("KERNEL online — protected mode, interrupts, memory.\n\n");
+    vga_puts("KERNEL online — protected mode, interrupts, memory, tasks.\n\n");
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
 
-    // --- M2: interrupts -------------------------------------------------------
+    // M2: interrupts
     idt_install();
     pit_init(100);
     keyboard_init();
     __asm__ volatile ("sti");
     ok("interrupts: IDT + PIC, timer on IRQ0, keyboard on IRQ1");
 
-    // --- M3: physical memory --------------------------------------------------
+    // M3: physical memory, paging, heap
     pmm_init();
-    vga_puts("  [ok] frames: ");
-    vga_put_dec(pmm_used_frames());
-    vga_puts(" used / ");
-    vga_put_dec(pmm_total_frames());
-    vga_puts(" total (");
-    vga_put_dec((pmm_total_frames() - pmm_used_frames()) * 4);
-    vga_puts(" KiB free)\n");
-
-    // --- M3: paging -----------------------------------------------------------
     paging_init();
-    ok("paging enabled (CR0.PG=1) — every address is now virtual");
-
-    // Prove the MMU translates: map a high, unused virtual page to a fresh
-    // physical frame, write through the virtual address, and read the value
-    // back through the frame's identity-mapped physical address.
-    uint32_t phys = pmm_alloc_frame();
-    uint32_t virt = 0xE0000000;
-    map_page(virt, phys, PAGE_RW);
-    *(volatile uint32_t *)virt = 0x0C0FFEE0;
-    uint32_t seen = *(volatile uint32_t *)phys;
-
-    vga_puts("  [ok] mapped ");
-    vga_put_hex(virt);
-    vga_puts(" -> ");
-    vga_put_hex(phys);
-    vga_puts("; wrote 0x0C0FFEE0, read ");
-    vga_put_hex(seen);
-    vga_putc('\n');
-
-    // --- M3: heap -------------------------------------------------------------
     heap_init();
-    void *a = kmalloc(64);
-    void *b = kmalloc(128);
-    kfree(a);
-    void *c = kmalloc(48);   // should reuse the block just freed at 'a'
+    ok("memory: frame allocator, paging (CR0.PG=1), kernel heap");
 
-    vga_puts("  [ok] kmalloc a=");
-    vga_put_hex((uint32_t)a);
-    vga_puts(" b=");
-    vga_put_hex((uint32_t)b);
-    vga_puts("; after kfree(a), c=");
-    vga_put_hex((uint32_t)c);
-    vga_puts(c == a ? " (reused a)\n" : "\n");
-
-    // --- interactive ----------------------------------------------------------
+    // M4: three tasks, pre-empted by the timer
     vga_set_color(VGA_YELLOW, VGA_BLACK);
-    vga_puts("\nClock ticks on IRQ0 (top-right). Type — keys arrive on IRQ1:\n\n");
+    vga_puts("\nScheduler: three tasks time-sliced by the timer (IRQ0):\n");
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
 
+    sched_init();
+    task_create("task A", task_a);
+    task_create("task B", task_b);
+    task_create("task C", task_c);
+    sched_start();   // pre-emption begins on the next tick
+
+    vga_set_cursor(15, 0);
+    vga_set_color(VGA_YELLOW, VGA_BLACK);
+    vga_puts("Type here — keys echo on IRQ1 while the tasks run above:\n\n");
+    vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
+
+    // The idle task: sleep until an interrupt. It, too, is scheduled in turn.
     for (;;) __asm__ volatile ("hlt");
 }
