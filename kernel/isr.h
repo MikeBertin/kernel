@@ -34,4 +34,7 @@ extern void irq4(void);  extern void irq5(void);  extern void irq6(void);  exter
 extern void irq8(void);  extern void irq9(void);  extern void irq10(void); extern void irq11(void);
 extern void irq12(void); extern void irq13(void); extern void irq14(void); extern void irq15(void);
 
+// The syscall vector, int 0x80.
+extern void isr128(void);
+
 #endif

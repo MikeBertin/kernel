@@ -87,6 +87,9 @@ IRQ 13, 45
 IRQ 14, 46
 IRQ 15, 47
 
+; --- the syscall vector (int 0x80) — reuses the exception common path ---
+ISR_NOERR 128
+
 ; --- common tails ------------------------------------------------------------
 ; Save the rest of the CPU state, load kernel data segments, hand a pointer to
 ; the register frame to C, then unwind and iret.

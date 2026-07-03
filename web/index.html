@@ -61,7 +61,7 @@
 <body>
   <div class="wrap">
     <h1><span class="prompt">$</span> KERNEL</h1>
-    <p class="sub">A from-scratch x86 operating system — hand-written boot sector, protected mode, interrupts, virtual memory, and pre-emptive multitasking. Booting live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image runs in QEMU.</p>
+    <p class="sub">A from-scratch x86 operating system — hand-written boot sector, protected mode, interrupts, virtual memory, pre-emptive multitasking, and a ring-3 shell. Booting live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image runs in QEMU. Click the screen and type a command.</p>
 
     <div class="crt">
       <div id="screen_container"><div></div><canvas></canvas></div>
@@ -263,8 +263,29 @@ asm("mov %0, %%cr0" :: "r"(cr0));</code></pre>
     ret                    ; ...and resume it where it last left off</code></pre>
     </div>
 
+    <!-- 11 -->
+    <div class="step">
+      <header>
+        <span class="tag">11 · userspace</span>
+        <h3>The one guarded doorway</h3>
+        <p>The shell prompt above runs in <em>ring 3</em> — unprivileged. It can't touch hardware or kernel memory directly; its only channel in is <em>int 0x80</em>, a gate we deliberately made callable from ring 3. It loads a call number in EAX and traps into the kernel, which does the privileged work and hands back a result. That trap boundary is what a system call actually is.</p>
+      </header>
+      <span class="file">kernel/shell.c</span>
+      <pre><code data-lang="c">// running in ring 3 — the ONLY way to reach the kernel
+static char s_read(void) {
+    uint32_t c;
+    asm volatile("int $0x80" : "=a"(c) : "a"(SYS_READ) : "memory");
+    return (char)c;               // the kernel read a key on our behalf
+}
+
+// the shell loop: read a key, echo it, run the command — all via syscalls
+char c = s_read();
+if (c >= 32 && c &lt; 127) { line[n++] = c; s_putc(c); }</code></pre>
+    </div>
+
     <footer>
-      Milestone 4 of 6 — next: a system-call boundary and a userspace shell.<br>
+      Milestone 5 of 6 complete — a hand-written OS from the boot sector to a
+      userspace shell. (Milestone 6 is this page: it boots live in your browser.)<br>
       Built by hand in C and x86 assembly. No Linux, no libraries underneath.
     </footer>
   </div>

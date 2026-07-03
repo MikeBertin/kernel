@@ -6,5 +6,6 @@
 #define KEYBOARD_H
 
 void keyboard_init(void);   // install the IRQ1 handler
+char keyboard_getchar(void);   // block until a key is available, return its ASCII
 
 #endif

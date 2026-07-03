@@ -24,7 +24,9 @@ void map_page(uint32_t virt, uint32_t phys, uint32_t flags) {
     if (!(page_directory[pd_index] & PAGE_PRESENT)) {
         uint32_t new_pt = pmm_alloc_frame();
         memset((void *)new_pt, 0, FRAME_SIZE);
-        page_directory[pd_index] = new_pt | PAGE_PRESENT | PAGE_RW;
+        // The directory entry must also allow user access, or ring-3 code is
+        // blocked from the whole 4 MiB region regardless of the page-table bits.
+        page_directory[pd_index] = new_pt | PAGE_PRESENT | PAGE_RW | PAGE_USER;
     }
 
     uint32_t *page_table = (uint32_t *)(page_directory[pd_index] & ~0xFFFu);
@@ -50,8 +52,10 @@ void paging_init(void) {
 
     // Identity-map the first 32 MiB: virtual X -> physical X. This keeps the
     // kernel, stack, VGA memory and page tables valid across the switch.
+    // PAGE_USER lets our ring-3 shell (M5) execute here too. (A production
+    // kernel would give userspace its own private, protected mappings.)
     for (uint32_t addr = 0; addr < IDENTITY_MAP_BYTES; addr += FRAME_SIZE)
-        map_page(addr, addr, PAGE_RW);
+        map_page(addr, addr, PAGE_RW | PAGE_USER);
 
     // Point CR3 at the directory, then set the paging bit (CR0.PG). The very
     // next instruction fetch already goes through the MMU.
