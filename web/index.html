@@ -70,8 +70,10 @@
     <p class="note">
       What you're watching: our hand-written boot sector loads the kernel off a
       virtual disk, switches the CPU from 16-bit real mode into 32-bit protected
-      mode, and hands off to C — which writes straight to VGA memory at
-      <code>0xB8000</code>. No Linux, no libraries underneath. Milestone 1 of 6.
+      mode, and hands off to C. It installs an interrupt table, so the top-right
+      clock ticks on the timer IRQ — and if you click the screen and type, each
+      keystroke is a keyboard IRQ handled by our own driver. No Linux, no
+      libraries underneath. Milestone 2 of 6.
     </p>
   </div>
 

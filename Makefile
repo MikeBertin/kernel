@@ -24,8 +24,12 @@ QEMU    := qemu-system-i386
 CFLAGS := -ffreestanding -std=gnu11 -O2 -Wall -Wextra \
           -fno-stack-protector -fno-pic -Ikernel
 
-C_SOURCES := $(wildcard kernel/*.c)
-C_OBJ     := $(patsubst kernel/%.c,$(BUILD)/%.o,$(C_SOURCES))
+C_SOURCES   := $(wildcard kernel/*.c)
+ASM_SOURCES := $(filter-out kernel/entry.asm,$(wildcard kernel/*.asm))
+C_OBJ       := $(patsubst kernel/%.c,$(BUILD)/%.o,$(C_SOURCES))
+ASM_OBJ     := $(patsubst kernel/%.asm,$(BUILD)/%.o,$(ASM_SOURCES))
+# entry.o must come first so _start lands at 0x10000.
+KOBJ        := $(BUILD)/entry.o $(ASM_OBJ) $(C_OBJ)
 
 .PHONY: all run debug screenshot web clean
 
@@ -43,8 +47,8 @@ $(BUILD):
 $(BOOT): boot/boot.asm | $(BUILD)
 	nasm -f bin $< -o $@
 
-# --- kernel entry stub: ELF object so it can be linked with the C code ---
-$(BUILD)/entry.o: kernel/entry.asm | $(BUILD)
+# --- assembly sources (entry stub + interrupt stubs) -> ELF objects ---
+$(BUILD)/%.o: kernel/%.asm | $(BUILD)
 	nasm -f elf32 $< -o $@
 
 # --- C sources -> ELF objects ---
@@ -52,8 +56,8 @@ $(BUILD)/%.o: kernel/%.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # --- link the kernel (entry.o first so _start is at 0x10000), flatten it ---
-$(KERNEL): $(BUILD)/entry.o $(C_OBJ) linker.ld
-	$(LD) -T linker.ld -o $(BUILD)/kernel.elf $(BUILD)/entry.o $(C_OBJ)
+$(KERNEL): $(KOBJ) linker.ld
+	$(LD) -T linker.ld -o $(BUILD)/kernel.elf $(KOBJ)
 	$(OBJCOPY) -O binary $(BUILD)/kernel.elf $@
 
 # --- final image: boot sector at sector 0, kernel from sector 1 ---

@@ -58,3 +58,20 @@ void vga_puts(const char *s) {
     for (size_t i = 0; s[i] != '\0'; i++)
         vga_putc(s[i]);
 }
+
+void vga_put_dec(uint32_t n) {
+    if (n == 0) { vga_putc('0'); return; }
+    char buf[10];
+    int i = 0;
+    while (n) { buf[i++] = (char)('0' + n % 10); n /= 10; }
+    while (i) vga_putc(buf[--i]);
+}
+
+void vga_puts_at(size_t row, size_t col, const char *s) {
+    size_t idx = row * VGA_COLS + col;
+    for (size_t i = 0; s[i] != '\0' && idx < VGA_COLS * VGA_ROWS; i++, idx++)
+        VGA_MEMORY[idx] = vga_entry(s[i], color);
+}
+
+uint8_t vga_get_color(void) { return color; }
+void    vga_set_color_raw(uint8_t packed) { color = packed; }

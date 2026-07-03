@@ -1,18 +1,26 @@
 ; kernel/entry.asm — 32-bit kernel entry stub
 ;
-; The boot sector far-jumps to physical 0x10000 with a flat GDT already loaded
-; and a stack set up. Thanks to the linker script, _start sits at exactly
-; 0x10000, so this is the very first kernel code to run. Its only job is to
-; call into C and, if kmain ever returns, halt forever.
+; The boot sector far-jumps to physical 0x10000 with a flat GDT loaded and a
+; stack ready. The linker puts _start at exactly 0x10000, so this runs first.
+; It zeroes the BSS (our loader copies only the on-disk image, not the
+; zero-initialised region that follows) and calls into C.
 
 [bits 32]
-[extern kmain]                 ; defined in kmain.c
+[extern kmain]
+[extern bss_start]
+[extern bss_end]
 global _start
 
 _start:
+    ; zero the BSS: the IDT and handler tables live here and must start clear
+    mov edi, bss_start
+    mov ecx, bss_end
+    sub ecx, edi
+    xor eax, eax
+    rep stosb
+
     call kmain
 
 .hang:
-    cli
-    hlt
+    hlt              ; sleep until an interrupt, then loop (interrupts stay on)
     jmp .hang

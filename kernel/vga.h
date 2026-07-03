@@ -21,5 +21,13 @@ void vga_init(void);                          // clear screen, reset cursor/colo
 void vga_set_color(uint8_t fg, uint8_t bg);   // colour for subsequent output
 void vga_putc(char c);                        // one char (handles '\n' + scroll)
 void vga_puts(const char *s);                 // NUL-terminated string
+void vga_put_dec(uint32_t n);                 // unsigned decimal at the cursor
+
+// Positioned write that does not disturb the streaming cursor — used for
+// status readouts like the uptime clock.
+void vga_puts_at(size_t row, size_t col, const char *s);
+
+uint8_t vga_get_color(void);                  // current packed colour byte
+void    vga_set_color_raw(uint8_t packed);    // restore a packed colour byte
 
 #endif

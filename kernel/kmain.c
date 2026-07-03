@@ -1,20 +1,33 @@
 // kernel/kmain.c — the kernel's C entry point.
 //
-// By the time we get here the CPU is in 32-bit protected mode with a flat GDT,
-// A20 is on, and we have a stack. This is the first C code in the OS. It runs
-// with no standard library, no heap, no OS underneath it — only what we wrote.
+// M2: the CPU can now call our code asynchronously. We build an interrupt
+// table, remap the interrupt controller, and attach a timer and a keyboard —
+// then enable interrupts and let the hardware drive us.
 #include "vga.h"
+#include "idt.h"
+#include "pit.h"
+#include "keyboard.h"
 
 void kmain(void) {
     vga_init();
 
     vga_set_color(VGA_LIGHT_GREEN, VGA_BLACK);
-    vga_puts("KERNEL: now in 32-bit protected mode.\n");
+    vga_puts("KERNEL: 32-bit protected mode.\n");
 
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
-    vga_puts("This is C, freestanding, writing straight to VGA memory at 0xB8000.\n");
-    vga_puts("Flat GDT installed, A20 enabled, BIOS left behind.\n");
-    vga_puts("No standard library. No OS beneath us. The metal is ours.\n");
+    vga_puts("Installing IDT, remapping the PIC, wiring timer + keyboard...\n");
 
-    // kmain returns into the entry stub's hlt-loop.
+    idt_install();     // build the IDT and remap the PIC (IRQs -> vectors 32-47)
+    pit_init(100);     // 100 Hz heartbeat on IRQ0
+    keyboard_init();   // echo keystrokes on IRQ1
+
+    __asm__ volatile ("sti");   // unmask interrupts — the machine comes alive
+
+    vga_set_color(VGA_YELLOW, VGA_BLACK);
+    vga_puts("\nInterrupts live. The clock (top-right) ticks on IRQ0.\n");
+    vga_puts("Type — each keystroke is an IRQ1 handled by our driver:\n\n");
+    vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
+
+    // Idle: sleep until the next interrupt. Everything now happens in handlers.
+    for (;;) __asm__ volatile ("hlt");
 }
