@@ -27,4 +27,6 @@ SECTIONS
         *(.bss*)
         bss_end = .;
     }
+
+    kernel_end = .;   /* end of the kernel in memory — frame allocator reserves below this */
 }

@@ -67,6 +67,13 @@ void vga_put_dec(uint32_t n) {
     while (i) vga_putc(buf[--i]);
 }
 
+void vga_put_hex(uint32_t n) {
+    static const char digits[] = "0123456789ABCDEF";
+    vga_puts("0x");
+    for (int shift = 28; shift >= 0; shift -= 4)
+        vga_putc(digits[(n >> shift) & 0xF]);
+}
+
 void vga_puts_at(size_t row, size_t col, const char *s) {
     size_t idx = row * VGA_COLS + col;
     for (size_t i = 0; s[i] != '\0' && idx < VGA_COLS * VGA_ROWS; i++, idx++)

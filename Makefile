@@ -20,6 +20,7 @@ CC      := i686-elf-gcc
 LD      := i686-elf-ld
 OBJCOPY := i686-elf-objcopy
 QEMU    := qemu-system-i386
+QEMUFLAGS := -m 32M
 
 CFLAGS := -ffreestanding -std=gnu11 -O2 -Wall -Wextra \
           -fno-stack-protector -fno-pic -Ikernel
@@ -70,17 +71,17 @@ $(IMAGE): $(BOOT) $(KERNEL)
 	dd if=$(KERNEL) of=$@ bs=512 seek=1 conv=notrunc 2>/dev/null
 
 run: $(IMAGE)
-	$(QEMU) -drive format=raw,file=$(IMAGE)
+	$(QEMU) $(QEMUFLAGS) -drive format=raw,file=$(IMAGE)
 
 debug: $(IMAGE)
-	$(QEMU) -drive format=raw,file=$(IMAGE) -s -S
+	$(QEMU) $(QEMUFLAGS) -drive format=raw,file=$(IMAGE) -s -S
 
 # Headless verification: boot with no display, wait for POST + our code to run,
 # dump the VGA framebuffer (QEMU writes PPM), convert to PNG.
 screenshot: $(IMAGE)
 	( echo "screendump $(BUILD)/screen.ppm"; sleep 4; \
 	  echo "screendump $(BUILD)/screen.ppm"; sleep 1; echo "quit" ) | \
-	$(QEMU) -drive format=raw,file=$(IMAGE) -display none -monitor stdio >/dev/null 2>&1
+	$(QEMU) $(QEMUFLAGS) -drive format=raw,file=$(IMAGE) -display none -monitor stdio >/dev/null 2>&1
 	sips -s format png $(BUILD)/screen.ppm --out $(BUILD)/screen.png >/dev/null
 	@echo "wrote $(BUILD)/screen.png"
 

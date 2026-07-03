@@ -3,85 +3,253 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KERNEL — boot in your browser</title>
+<title>KERNEL — a from-scratch x86 OS you can boot in your browser</title>
 <style>
   :root {
-    --bg:      #0b0e14;
-    --panel:   #11151f;
-    --ink:     #c8d0e0;
-    --muted:   #6b7686;
-    --accent:  #7ee787;
-    --border:  #1e2430;
-    --amber:   #e3b341;
+    --bg:#0b0e14; --panel:#11151f; --ink:#c8d0e0; --muted:#6b7686;
+    --accent:#7ee787; --border:#1e2430; --amber:#e3b341; --blue:#79c0ff;
+    --code-bg:#0d1117;
   }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font: 15px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
-  }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 64px; }
-  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: .5px; }
-  h1 .prompt { color: var(--accent); }
-  .sub { color: var(--muted); margin: 0 0 28px; font-size: 13px; }
-  .crt {
-    background: #000; border: 1px solid var(--border); border-radius: 6px;
-    padding: 14px; box-shadow: 0 0 0 1px #000, 0 20px 60px -20px #000;
-  }
-  /* v86 renders text mode into this inner div */
-  #screen_container div {
-    white-space: pre; font: 15px/1.06 ui-monospace, Menlo, monospace;
-    color: #d8dee9;
-  }
-  #screen_container canvas { display: none; }
-  .bar {
-    display: flex; gap: 10px; align-items: center; margin: 16px 0 8px;
-  }
-  button {
-    background: var(--panel); color: var(--ink); border: 1px solid var(--border);
-    border-radius: 5px; padding: 7px 14px; font: inherit; font-size: 13px;
-    cursor: pointer;
-  }
-  button:hover { border-color: var(--muted); }
-  .status { color: var(--muted); font-size: 12px; }
-  .status .dot { color: var(--amber); }
-  .status.live .dot { color: var(--accent); }
-  .note { color: var(--muted); font-size: 12.5px; margin-top: 22px; }
-  .note code { color: var(--ink); }
-  a { color: var(--accent); text-decoration: none; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .wrap { max-width:820px; margin:0 auto; padding:40px 20px 80px; }
+  h1 { font-size:23px; margin:0 0 4px; letter-spacing:.5px; }
+  h1 .prompt { color:var(--accent); }
+  .sub { color:var(--muted); margin:0 0 26px; font-size:13px; }
+  a { color:var(--accent); text-decoration:none; }
+
+  /* live boot */
+  .crt { background:#000; border:1px solid var(--border); border-radius:6px;
+    padding:14px; box-shadow:0 0 0 1px #000, 0 20px 60px -20px #000; }
+  #screen_container div { white-space:pre; font:15px/1.06 ui-monospace,Menlo,monospace; color:#d8dee9; }
+  #screen_container canvas { display:none; }
+  .bar { display:flex; gap:10px; align-items:center; margin:14px 0 6px; }
+  button { background:var(--panel); color:var(--ink); border:1px solid var(--border);
+    border-radius:5px; padding:7px 14px; font:inherit; font-size:13px; cursor:pointer; }
+  button:hover { border-color:var(--muted); }
+  .status { color:var(--muted); font-size:12px; }
+  .status .dot { color:var(--amber); }
+  .status.live .dot { color:var(--accent); }
+  .hint { color:var(--muted); font-size:12.5px; margin:14px 0 0; }
+  .hint code { color:var(--ink); }
+
+  /* walkthrough */
+  .divider { display:flex; align-items:center; gap:14px; margin:52px 0 8px; }
+  .divider h2 { font-size:15px; color:var(--ink); margin:0; white-space:nowrap; letter-spacing:.5px; }
+  .divider .rule { height:1px; background:var(--border); flex:1; }
+  .lead { color:var(--muted); font-size:13px; margin:0 0 8px; }
+
+  .step { border:1px solid var(--border); border-radius:8px; margin:20px 0;
+    overflow:hidden; background:var(--panel); }
+  .step > header { padding:14px 16px 12px; }
+  .step .tag { font-size:11px; color:var(--accent); letter-spacing:1px; text-transform:uppercase; }
+  .step h3 { margin:4px 0 6px; font-size:16px; color:var(--ink); }
+  .step p { margin:0; color:var(--muted); font-size:13.5px; }
+  .step p em { color:var(--ink); font-style:normal; }
+  .step .file { display:block; font-size:11.5px; color:var(--muted); padding:8px 16px 0;
+    border-top:1px solid var(--border); background:var(--code-bg); }
+  pre { margin:0; padding:10px 16px 16px; background:var(--code-bg); overflow-x:auto;
+    font:13px/1.55 ui-monospace,Menlo,monospace; }
+  code .c { color:#6b7686; font-style:italic; }   /* comment */
+  code .s { color:var(--amber); }                 /* string  */
+  code .n { color:var(--blue); }                  /* number  */
+  code .k { color:#ff7b72; }                       /* keyword */
+  footer { margin-top:56px; color:var(--muted); font-size:12.5px; text-align:center; }
 </style>
 </head>
 <body>
   <div class="wrap">
     <h1><span class="prompt">$</span> KERNEL</h1>
-    <p class="sub">A from-scratch x86 operating system — booting live in your browser via <a href="https://github.com/copy/v86">v86</a>. This is the exact same disk image QEMU runs.</p>
+    <p class="sub">A from-scratch x86 operating system — hand-written boot sector, protected mode, interrupts, and virtual memory. Booting live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image runs in QEMU.</p>
 
     <div class="crt">
-      <div id="screen_container">
-        <div></div>
-        <canvas></canvas>
-      </div>
+      <div id="screen_container"><div></div><canvas></canvas></div>
     </div>
-
     <div class="bar">
       <button id="restart">↻ reboot</button>
       <span class="status" id="status"><span class="dot">●</span> booting…</span>
     </div>
+    <p class="hint">Click the screen and type — each keystroke is a hardware
+      interrupt handled by our own driver. The clock top-right ticks on the timer IRQ.</p>
 
-    <p class="note">
-      What you're watching: our hand-written boot sector loads the kernel off a
-      virtual disk, switches the CPU from 16-bit real mode into 32-bit protected
-      mode, and hands off to C. It installs an interrupt table, so the top-right
-      clock ticks on the timer IRQ — and if you click the screen and type, each
-      keystroke is a keyboard IRQ handled by our own driver. No Linux, no
-      libraries underneath. Milestone 2 of 6.
-    </p>
+    <div class="divider"><h2>How it works — the actual code</h2><div class="rule"></div></div>
+    <p class="lead">Every line below is really in the kernel booting above. Follow the machine coming up, from the first byte the BIOS runs to a working virtual-memory system.</p>
+
+    <!-- 1 -->
+    <div class="step">
+      <header>
+        <span class="tag">01 · boot</span>
+        <h3>512 bytes and a magic number</h3>
+        <p>The BIOS loads the first disk sector to <em>0x7C00</em> and jumps there in 16-bit real mode — but only if the sector ends in the signature <em>0x55 0xAA</em>. That tiny stub is all we get to bootstrap everything else.</p>
+      </header>
+      <span class="file">boot/boot.asm</span>
+      <pre><code data-lang="asm">[bits 16]
+[org 0x7C00]            ; the BIOS drops us here, still a 1978-era 8086
+
+    mov ax, 0x0003     ; ask the video BIOS for 80x25 colour text mode
+    int 0x10
+    call load_kernel   ; read the C kernel off the disk into memory
+    call enable_a20    ; unlock addressing above 1 MiB
+    call switch_to_pm  ; leave real mode behind — never returns
+
+times 510 - ($ - $$) db 0   ; pad to 510 bytes...
+dw 0xAA55                    ; ...then the signature the BIOS checks for</code></pre>
+    </div>
+
+    <!-- 2 -->
+    <div class="step">
+      <header>
+        <span class="tag">02 · protected mode</span>
+        <h3>Escaping real mode by hand</h3>
+        <p>We load a <em>flat GDT</em> (code + data segments each spanning all 4 GiB), set the protection-enable bit, then <em>far-jump</em> — which is what actually reloads <em>CS</em> and drops the CPU into 32-bit protected mode.</p>
+      </header>
+      <span class="file">boot/boot.asm</span>
+      <pre><code data-lang="asm">switch_to_pm:
+    cli
+    lgdt [gdt_descriptor]   ; describe our flat segment layout to the CPU
+    mov eax, cr0
+    or  eax, 0x1            ; CR0.PE = 1 — turn on protected mode
+    mov cr0, eax
+    jmp CODE_SEG:init_pm    ; far jump flushes the pipeline, loads a 32-bit CS</code></pre>
+    </div>
+
+    <!-- 3 -->
+    <div class="step">
+      <header>
+        <span class="tag">03 · output</span>
+        <h3>The screen is just memory</h3>
+        <p>No driver stack, no BIOS call. VGA text mode is memory-mapped at <em>0xB8000</em>: each cell is a character byte plus a colour attribute byte. Write a 16-bit word and a character appears.</p>
+      </header>
+      <span class="file">kernel/vga.c</span>
+      <pre><code data-lang="c">#define VGA_MEMORY ((volatile uint16_t *)0xB8000)
+
+// low byte = character, high byte = attribute (background &lt;&lt; 4 | foreground)
+static inline uint16_t vga_entry(char c, uint8_t attr) {
+    return (uint16_t)c | ((uint16_t)attr &lt;&lt; 8);
+}
+VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre>
+    </div>
+
+    <!-- 4 -->
+    <div class="step">
+      <header>
+        <span class="tag">04 · interrupts</span>
+        <h3>A jump table for the CPU</h3>
+        <p>The <em>IDT</em> tells the CPU where to go when interrupt <em>N</em> fires. Each gate stores a handler address split across two halves; <em>0x8E</em> marks it a present, ring-0, 32-bit interrupt gate.</p>
+      </header>
+      <span class="file">kernel/idt.c</span>
+      <pre><code data-lang="c">void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
+    idt[num].base_low  = base &amp; 0xFFFF;
+    idt[num].base_high = (base &gt;&gt; 16) &amp; 0xFFFF;
+    idt[num].selector  = sel;      // our kernel code segment, 0x08
+    idt[num].flags     = flags;    // 0x8E = present, ring 0, interrupt gate
+}</code></pre>
+    </div>
+
+    <!-- 5 -->
+    <div class="step">
+      <header>
+        <span class="tag">05 · interrupts</span>
+        <h3>Defusing a legacy landmine</h3>
+        <p>The 8259 <em>PIC</em> delivers hardware IRQs on vectors that, by default, collide with the CPU's own exception vectors — a timer tick would look like a double fault. We remap it so IRQs land safely on vectors 32–47.</p>
+      </header>
+      <span class="file">kernel/isr.c</span>
+      <pre><code data-lang="c">void pic_remap(void) {
+    outb(PIC1_CMD, 0x11);  outb(PIC2_CMD, 0x11);   // begin init
+    outb(PIC1_DATA, 0x20); outb(PIC2_DATA, 0x28);  // master-&gt;32, slave-&gt;40
+    outb(PIC1_DATA, 0x04); outb(PIC2_DATA, 0x02);  // wire the cascade
+    outb(PIC1_DATA, 0x01); outb(PIC2_DATA, 0x01);  // 8086 mode
+    outb(PIC1_DATA, 0x00); outb(PIC2_DATA, 0x00);  // unmask every line
+}</code></pre>
+    </div>
+
+    <!-- 6 -->
+    <div class="step">
+      <header>
+        <span class="tag">06 · keyboard</span>
+        <h3>Every keystroke is an interrupt</h3>
+        <p>Press a key and the controller raises <em>IRQ1</em>. Our handler reads the raw scancode from port <em>0x60</em>, ignores key-release codes, translates to ASCII, and echoes it — exactly what you're doing when you type in the box above.</p>
+      </header>
+      <span class="file">kernel/keyboard.c</span>
+      <pre><code data-lang="c">static void keyboard_callback(registers_t *r) {
+    uint8_t scancode = inb(0x60);       // read the key from the controller
+    if (scancode &amp; 0x80) return;        // top bit set = key released; ignore
+    char c = scancode_ascii[scancode];  // scancode -&gt; ASCII
+    if (c) vga_putc(c);
+}</code></pre>
+    </div>
+
+    <!-- 7 -->
+    <div class="step">
+      <header>
+        <span class="tag">07 · physical memory</span>
+        <h3>Handing out RAM, one frame at a time</h3>
+        <p>Physical memory is carved into 4 KiB <em>frames</em>, one bit each in a bitmap: 1 used, 0 free. Everything above — page tables, the heap — ultimately draws its memory from here.</p>
+      </header>
+      <span class="file">kernel/pmm.c</span>
+      <pre><code data-lang="c">uint32_t pmm_alloc_frame(void) {
+    for (uint32_t f = 0; f &lt; TOTAL_FRAMES; f++) {
+        if (!is_used(f)) {
+            set_used(f);
+            return f * FRAME_SIZE;   // the physical address of a free 4 KiB frame
+        }
+    }
+    return 0;   // out of physical memory
+}</code></pre>
+    </div>
+
+    <!-- 8 -->
+    <div class="step">
+      <header>
+        <span class="tag">08 · virtual memory</span>
+        <h3>Turning on the illusion</h3>
+        <p><em>map_page</em> points a virtual page at a physical frame through the two-level page tables; <em>invlpg</em> drops the stale cached translation. Then we load <em>CR3</em> and set <em>CR0.PG</em> — and from the very next instruction, every address the CPU touches is virtual.</p>
+      </header>
+      <span class="file">kernel/paging.c</span>
+      <pre><code data-lang="c">void map_page(uint32_t virt, uint32_t phys, uint32_t flags) {
+    uint32_t pd = virt &gt;&gt; 22, pt = (virt &gt;&gt; 12) &amp; 0x3FF;
+    // ...allocate a page table for this region if none exists yet...
+    page_table[pt] = (phys &amp; ~0xFFF) | flags | PAGE_PRESENT;
+    invlpg(virt);                 // forget any cached translation for this page
+}
+
+asm("mov %0, %%cr3" :: "r"(page_directory));   // point the MMU at our tables
+cr0 |= 0x80000000;                             // CR0.PG — paging is now on
+asm("mov %0, %%cr0" :: "r"(cr0));</code></pre>
+    </div>
+
+    <!-- 9 -->
+    <div class="step">
+      <header>
+        <span class="tag">09 · heap</span>
+        <h3>kmalloc, from nothing</h3>
+        <p>A first-fit walk over a linked list of blocks: find a free one big enough, split off the surplus, hand back the payload. <em>kfree</em> marks it free and coalesces with its neighbour — which is why, in the boot log, a freed block gets reused on the next allocation.</p>
+      </header>
+      <span class="file">kernel/heap.c</span>
+      <pre><code data-lang="c">void *kmalloc(size_t size) {
+    for (block_t *b = head; b; b = b-&gt;next) {
+        if (b-&gt;free &amp;&amp; b-&gt;size &gt;= size) {
+            split(b, size);       // carve off any surplus as a new free block
+            b-&gt;free = 0;
+            return (uint8_t *)b + sizeof(block_t);
+        }
+    }
+    return NULL;   // out of heap
+}</code></pre>
+    </div>
+
+    <footer>
+      Milestone 3 of 6 — next: pre-emptive scheduling, then a userspace shell.<br>
+      Built by hand in C and x86 assembly. No Linux, no libraries underneath.
+    </footer>
   </div>
 
   <script src="vendor/libv86.js"></script>
   <script>
+    // --- boot the real OS image in v86 ---
     const V86Ctor = window.V86 || window.V86Starter;
     const statusEl = document.getElementById("status");
-
     function boot() {
       const emulator = new V86Ctor({
         wasm_path: "vendor/v86.wasm",
@@ -93,19 +261,43 @@
         vga_memory_size: 2 * 1024 * 1024,
         screen_container: document.getElementById("screen_container"),
       });
-
       emulator.add_listener("emulator-ready", () => {
         statusEl.classList.add("live");
         statusEl.innerHTML = '<span class="dot">●</span> live — running our kernel';
       });
-
-      document.getElementById("restart").onclick = () => {
-        emulator.restart();
-      };
+      document.getElementById("restart").onclick = () => emulator.restart();
       window.__emu = emulator;
     }
-
     boot();
+
+    // --- lightweight syntax highlighter for the code excerpts ---
+    const KEYWORDS = /\b(void|int|char|uint\d*_t|size_t|static|inline|struct|return|for|if|while|asm|volatile|mov|jmp|call|cli|lgdt|or|cmp|times|db|dw|equ)\b/g;
+    function commentIndex(line, marker) {
+      let inStr = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') inStr = !inStr;
+        else if (!inStr && line.startsWith(marker, i)) return i;
+      }
+      return -1;
+    }
+    function highlight(raw, lang) {
+      const marker = lang === "asm" ? ";" : "//";
+      return raw.split("\n").map(line => {
+        const ci = commentIndex(line, marker);
+        const codePart = ci >= 0 ? line.slice(0, ci) : line;
+        const comPart  = ci >= 0 ? line.slice(ci) : "";
+        let out = codePart
+          .replace(/("[^"]*")/g, '<span class="s">$1</span>')
+          .replace(/\b(0x[0-9A-Fa-f]+|\d+)\b/g, '<span class="n">$1</span>')
+          .replace(KEYWORDS, '<span class="k">$1</span>');
+        if (comPart) out += '<span class="c">' + comPart + "</span>";
+        return out;
+      }).join("\n");
+    }
+    document.querySelectorAll("code[data-lang]").forEach(el => {
+      el.innerHTML = highlight(el.innerHTML, el.dataset.lang);
+    });
   </script>
 </body>
 </html>
