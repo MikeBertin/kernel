@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KERNEL — boot in your browser</title>
+<style>
+  :root {
+    --bg:      #0b0e14;
+    --panel:   #11151f;
+    --ink:     #c8d0e0;
+    --muted:   #6b7686;
+    --accent:  #7ee787;
+    --border:  #1e2430;
+    --amber:   #e3b341;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: .5px; }
+  h1 .prompt { color: var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 28px; font-size: 13px; }
+  .crt {
+    background: #000; border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px; box-shadow: 0 0 0 1px #000, 0 20px 60px -20px #000;
+  }
+  /* v86 renders text mode into this inner div */
+  #screen_container div {
+    white-space: pre; font: 15px/1.06 ui-monospace, Menlo, monospace;
+    color: #d8dee9;
+  }
+  #screen_container canvas { display: none; }
+  .bar {
+    display: flex; gap: 10px; align-items: center; margin: 16px 0 8px;
+  }
+  button {
+    background: var(--panel); color: var(--ink); border: 1px solid var(--border);
+    border-radius: 5px; padding: 7px 14px; font: inherit; font-size: 13px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+  .status { color: var(--muted); font-size: 12px; }
+  .status .dot { color: var(--amber); }
+  .status.live .dot { color: var(--accent); }
+  .note { color: var(--muted); font-size: 12.5px; margin-top: 22px; }
+  .note code { color: var(--ink); }
+  a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1><span class="prompt">$</span> KERNEL</h1>
+    <p class="sub">A from-scratch x86 operating system — booting live in your browser via <a href="https://github.com/copy/v86">v86</a>. This is the exact same disk image QEMU runs.</p>
+
+    <div class="crt">
+      <div id="screen_container">
+        <div></div>
+        <canvas></canvas>
+      </div>
+    </div>
+
+    <div class="bar">
+      <button id="restart">↻ reboot</button>
+      <span class="status" id="status"><span class="dot">●</span> booting…</span>
+    </div>
+
+    <p class="note">
+      What you're watching: our hand-written boot sector loads the kernel off a
+      virtual disk, switches the CPU from 16-bit real mode into 32-bit protected
+      mode, and hands off to C — which writes straight to VGA memory at
+      <code>0xB8000</code>. No Linux, no libraries underneath. Milestone 1 of 6.
+    </p>
+  </div>
+
+  <script src="vendor/libv86.js"></script>
+  <script>
+    const V86Ctor = window.V86 || window.V86Starter;
+    const statusEl = document.getElementById("status");
+
+    function boot() {
+      const emulator = new V86Ctor({
+        wasm_path: "vendor/v86.wasm",
+        bios:      { url: "vendor/seabios.bin" },
+        vga_bios:  { url: "vendor/vgabios.bin" },
+        hda:       { url: "os-image.bin", size: 1048576, async: false },
+        autostart: true,
+        memory_size: 32 * 1024 * 1024,
+        vga_memory_size: 2 * 1024 * 1024,
+        screen_container: document.getElementById("screen_container"),
+      });
+
+      emulator.add_listener("emulator-ready", () => {
+        statusEl.classList.add("live");
+        statusEl.innerHTML = '<span class="dot">●</span> live — running our kernel';
+      });
+
+      document.getElementById("restart").onclick = () => {
+        emulator.restart();
+      };
+      window.__emu = emulator;
+    }
+
+    boot();
+  </script>
+</body>
+</html>

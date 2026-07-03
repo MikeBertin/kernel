@@ -1,0 +1,8 @@
+# build artifacts (assembled binaries, objects, screendumps)
+build/
+
+# generated: the disk image staged into web/ by `make web`
+web/os-image.bin
+
+# note: web/vendor/ (v86 runtime + BIOS) IS tracked, so the browser
+# demo stays self-contained and runnable offline.
