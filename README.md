@@ -23,7 +23,6 @@ This is the foundation beneath every piece of software ever written. Understandi
 ## Key Files
 | File | Purpose |
 |------|---------|
-| `HANDOVER.md` | **Start here in a new session** — architecture, workflow, gotchas, next steps |
 | `README.md` | This file |
 | `STATUS.md` | Current state and next action |
 | `log.md` | Decisions, progress, session notes |

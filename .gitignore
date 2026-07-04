@@ -1,6 +1,9 @@
 # build artifacts (assembled binaries, objects, screendumps)
 build/
 
+# local-only session handover — kept on disk, not published to the repo
+HANDOVER.md
+
 # note: web/ IS tracked in full — the v86 runtime + BIOS (web/vendor/) and the
 # built disk image (web/os-image.bin, refreshed by `make web`) — so the browser
 # demo is self-contained and deployable to GitHub Pages. Rebuild + `make web`
