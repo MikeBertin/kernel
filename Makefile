@@ -52,6 +52,13 @@ $(BOOT): boot/boot.asm | $(BUILD)
 $(BUILD)/%.o: kernel/%.asm | $(BUILD)
 	nasm -f elf32 $< -o $@
 
+# --- the ring-3 shell: keep its constants un-merged so ALL of its read-only
+#     data stays in shell.o (and thus in the linker's .user_text section that
+#     paging marks user-accessible). Otherwise string-merging scatters its
+#     literals into kernel .rodata and ring 3 faults reading them. ---
+$(BUILD)/shell.o: kernel/shell.c | $(BUILD)
+	$(CC) $(CFLAGS) -fno-merge-constants -c $< -o $@
+
 # --- C sources -> ELF objects ---
 $(BUILD)/%.o: kernel/%.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -2,6 +2,10 @@
 #include "paging.h"
 #include "pmm.h"
 #include "string.h"
+#include "shell.h"
+
+// Marked by the linker: the ring-3 shell's code + read-only data.
+extern uint8_t user_text_start[], user_text_end[];
 
 // A page directory and page tables are each 1024 32-bit entries (one 4 KiB
 // frame). Entry layout: bits 12-31 = frame address, low bits = flags.
@@ -50,12 +54,19 @@ void paging_init(void) {
     page_directory = (uint32_t *)pmm_alloc_frame();
     memset(page_directory, 0, FRAME_SIZE);
 
-    // Identity-map the first 32 MiB: virtual X -> physical X. This keeps the
-    // kernel, stack, VGA memory and page tables valid across the switch.
-    // PAGE_USER lets our ring-3 shell (M5) execute here too. (A production
-    // kernel would give userspace its own private, protected mappings.)
+    // Identity-map the first 32 MiB as SUPERVISOR-only: virtual X -> physical X.
+    // Ring 3 cannot touch any of it. The page-directory entries still carry the
+    // user bit (map_page sets it) so the per-page bits below are what decide
+    // access — kernel pages here stay off-limits to userspace.
     for (uint32_t addr = 0; addr < IDENTITY_MAP_BYTES; addr += FRAME_SIZE)
-        map_page(addr, addr, PAGE_RW | PAGE_USER);
+        map_page(addr, addr, PAGE_RW);
+
+    // Open just the ring-3 shell's own pages to userspace: its code + literals
+    // (.user_text) and its stack. Everything else remains kernel-only.
+    for (uint32_t a = (uint32_t)user_text_start & ~0xFFFu; a < (uint32_t)user_text_end; a += FRAME_SIZE)
+        map_page(a, a, PAGE_RW | PAGE_USER);
+    for (uint32_t a = (uint32_t)user_stack; a < (uint32_t)user_stack + USER_STACK_SIZE; a += FRAME_SIZE)
+        map_page(a, a, PAGE_RW | PAGE_USER);
 
     // Point CR3 at the directory, then set the paging bit (CR0.PG). The very
     // next instruction fetch already goes through the MMU.

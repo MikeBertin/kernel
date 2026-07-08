@@ -283,9 +283,36 @@ char c = s_read();
 if (c >= 32 && c &lt; 127) { line[n++] = c; s_putc(c); }</code></pre>
     </div>
 
+    <!-- 12 -->
+    <div class="step">
+      <header>
+        <span class="tag">12 · protection</span>
+        <h3>What memory protection actually is</h3>
+        <p>Kernel pages are mapped supervisor-only; only the shell's own code and
+        stack carry the user bit. So when ring 3 reaches for kernel memory — try
+        the <em>poke</em> command above — the CPU page-faults. A real OS doesn't
+        die: it kills the offending process and carries on. With one process, we
+        "kill" it by rewriting the interrupt frame to restart the shell on a
+        fresh stack. That's a fault turned into a clean recovery.</p>
+      </header>
+      <span class="file">kernel/fault.c</span>
+      <pre><code data-lang="c">static void page_fault(registers_t *r) {
+    uint32_t cr2;                          // the address that faulted
+    asm volatile("mov %%cr2, %0" : "=r"(cr2));
+
+    if ((r-&gt;cs &amp; 3) == 3) {                 // the fault came from ring 3
+        // report "denied access to &lt;cr2&gt;", then restart the shell:
+        r-&gt;eip     = (uint32_t)shell_loop;         // resume here...
+        r-&gt;useresp = (uint32_t)(user_stack + USER_STACK_SIZE);  // ...fresh stack
+        return;                            // iret returns to ring 3, recovered
+    }
+    // a fault from ring 0 is a real kernel bug — halt.
+}</code></pre>
+    </div>
+
     <footer>
-      Milestone 5 of 6 complete — a hand-written OS from the boot sector to a
-      userspace shell. (Milestone 6 is this page: it boots live in your browser.)<br>
+      A hand-written OS from the boot sector to a userspace shell with real
+      memory protection — booting live in your browser.<br>
       Built by hand in C and x86 assembly. No Linux, no libraries underneath.
     </footer>
   </div>

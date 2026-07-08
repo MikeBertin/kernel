@@ -6,7 +6,10 @@
 #include "shell.h"
 #include "syscall.h"
 
-uint8_t user_stack[16384];   // the ring-3 stack
+// The ring-3 stack. Page-aligned and a whole number of pages, so paging can
+// mark exactly these pages user-accessible without exposing neighbouring
+// kernel BSS.
+uint8_t user_stack[USER_STACK_SIZE] __attribute__((aligned(4096)));
 
 // --- syscall wrappers (the only privileged operations available to us) ---
 static void s_putc(char c) {
@@ -48,7 +51,7 @@ static void s_write_dec(uint32_t v) {
 
 static void run(const char *line) {
     if (streq(line, "help"))
-        s_write("commands: help, echo <text>, uptime, clear\n");
+        s_write("commands: help, echo <text>, uptime, clear, poke\n");
     else if (streq(line, "clear"))
         s_clear();
     else if (streq(line, "uptime")) {
@@ -58,14 +61,18 @@ static void run(const char *line) {
     } else if (starts_with(line, "echo ")) {
         s_write(line + 5);
         s_putc('\n');
+    } else if (streq(line, "poke")) {
+        // Deliberately reach past our sandbox: write to VGA memory (0xB8000),
+        // a kernel-only page. In ring 3 this page-faults — the kernel catches
+        // it, "kills" us, and restarts the shell. Real memory protection.
+        s_write("writing directly to kernel memory (0xB8000)...\n");
+        *(volatile unsigned int *)0xB8000 = 0x2F212F21;
+        s_write("...if you can read this, protection failed.\n");
     } else if (line[0] != '\0')
         s_write("unknown command (try 'help')\n");
 }
 
-void user_shell(void) {
-    s_write("\nKERNEL shell — you are in ring 3. Every action is a syscall.\n");
-    s_write("commands: help, echo <text>, uptime, clear\n\n");
-
+void shell_loop(void) {
     char line[128];
     for (;;) {
         s_write("$ ");
@@ -79,4 +86,10 @@ void user_shell(void) {
         line[n] = '\0';
         run(line);
     }
+}
+
+void user_shell(void) {
+    s_write("\nKERNEL shell — you are in ring 3. Every action is a syscall.\n");
+    s_write("commands: help, echo <text>, uptime, clear, poke\n\n");
+    shell_loop();
 }

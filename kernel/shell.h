@@ -4,7 +4,12 @@
 
 #include <stdint.h>
 
-void user_shell(void);          // the ring-3 entry point (syscalls only)
-extern uint8_t user_stack[16384];
+#define USER_STACK_SIZE 16384
+
+void user_shell(void);   // ring-3 entry: banner, then the command loop
+void shell_loop(void);   // the command loop alone (re-entered after a fault)
+
+// Page-aligned so paging can mark exactly its pages user-accessible.
+extern uint8_t user_stack[USER_STACK_SIZE];
 
 #endif

@@ -14,6 +14,7 @@
 #include "heap.h"
 #include "syscall.h"
 #include "shell.h"
+#include "fault.h"
 
 extern void enter_usermode(uint32_t eip, uint32_t esp);
 
@@ -35,21 +36,22 @@ void kmain(void) {
     gdt_install();     // GDT with user segments + TSS (needed for ring 3)
     idt_install();     // IDT + PIC remap
     syscall_init();    // int 0x80 gate
+    fault_init();      // recoverable page-fault handler
     pit_init(100);
     keyboard_init();
-    ok("cpu: GDT + TSS, IDT + PIC, syscall gate (int 0x80)");
+    ok("cpu: GDT + TSS, IDT + PIC, syscalls, page-fault handler");
 
     pmm_init();
-    paging_init();
+    paging_init();     // kernel supervisor-only; just the shell's pages are user
     heap_init();
-    ok("memory: frame allocator, paging (CR0.PG=1), kernel heap");
+    ok("memory: paging with ring-3 protection, kernel heap");
 
     __asm__ volatile ("sti");
     ok("timer on IRQ0, keyboard on IRQ1, interrupts live");
 
     vga_set_color(VGA_YELLOW, VGA_BLACK);
     vga_puts("\nDropping to ring 3 — the shell below is unprivileged.\n");
-    vga_puts("It can only reach the kernel through system calls:\n");
+    vga_puts("Try 'poke' to watch it get denied when it touches kernel memory:\n");
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
 
     // Lower the CPU to ring 3 and jump into the shell. This never returns.
