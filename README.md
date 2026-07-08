@@ -1,37 +1,74 @@
-# 🖥️ Project KERNEL — OS from Scratch
+# 🖥️ KERNEL
 
-> *"An OS is just a program that never exits."*
+**A complete x86 operating system, written from scratch in C and assembly — and it boots in your browser.**
 
-## What This Is
-Build a working operating system kernel from scratch. Not Linux from Scratch (which uses existing components) — writing the bootloader, memory manager, scheduler, and basic drivers by hand. Target: something that boots on real hardware (or QEMU), prints to screen, handles interrupts, and runs a simple userspace program.
+### ▶ [Live demo — mikebertin.github.io/kernel](https://mikebertin.github.io/kernel/)
 
-## Goal & Why It Matters
-Writing an OS removes the last abstraction. You understand what a process actually is, what memory management costs, why context switching is expensive, what a system call actually does. After BABEL (which teaches you what languages are) and KERNEL (which teaches you what they run on), you have no more black boxes.
+Click the screen, type `help`, then try `poke` and watch the CPU deny it.
 
-This is the foundation beneath every piece of software ever written. Understanding it changes how you build everything above it.
+![KERNEL booting to a ring-3 shell](web/og.png)
 
-## Milestones
-| # | Milestone | Target |
-|---|-----------|--------|
-| 1 | Study: *Operating Systems: Three Easy Pieces* (Arpaci-Dusseau) + OSDev wiki | TBD |
-| 2 | Bootloader: boot to protected mode, print "Hello" | TBD |
-| 3 | Memory manager: paging, heap allocator | TBD |
-| 4 | Interrupt handler + basic keyboard driver | TBD |
-| 5 | Scheduler: preemptive multitasking, context switch | TBD |
-| 6 | Basic shell running in userspace | TBD |
+No Linux, no libraries, no framework underneath. A hand-written boot sector
+starts the machine in 16-bit real mode and climbs, one layer at a time, all the
+way to an interactive shell running unprivileged in ring 3 behind real memory
+protection. The **same disk image** runs in QEMU and — via
+[v86](https://github.com/copy/v86), an x86 emulator compiled to WebAssembly —
+live in a browser tab.
 
-## Key Files
-| File | Purpose |
-|------|---------|
-| `README.md` | This file |
-| `STATUS.md` | Current state and next action |
-| `log.md` | Decisions, progress, session notes |
+## What's inside
 
-## Notes
-- Lives under FOUNDRY umbrella — sequence position: second (after BABEL, before PROMETHEUS)
-- Implementation language: C + x86 assembly (traditional, best documented)
-- Target: boots in QEMU first, real hardware stretch goal
-- Reference: *Operating Systems: Three Easy Pieces* (free online), OSDev wiki (osdev.org), *Writing a Simple OS from Scratch* (Nick Blundell)
-- SPECTRE (OSCP) will build low-level systems knowledge that feeds directly into this
+Built bottom-up, every layer by hand:
 
-> *Any quotes used in this project must be real, sourced attributions. No invented quotes.*
+| Layer | What it does |
+|-------|--------------|
+| **Boot** | A 512-byte boot sector: real mode → 32-bit protected mode by hand (GDT, A20 line, `CR0.PE`), then into C. |
+| **Interrupts** | An IDT, a remapped 8259 PIC, a PIT timer (IRQ0) and a PS/2 keyboard driver (IRQ1). |
+| **Virtual memory** | A physical frame allocator, two-level paging, and a `kmalloc`/`kfree` kernel heap. |
+| **Multitasking** | A pre-emptive round-robin scheduler with real context switches on every timer tick. |
+| **Userspace** | Ring 3, `int 0x80` system calls, and an interactive shell that can only reach the kernel through syscalls. |
+| **Protection** | Kernel memory is off-limits to ring 3; a page fault is caught, the offending process is killed, and the shell restarts. |
+
+The [live demo](https://mikebertin.github.io/kernel/) pairs the running OS with an
+annotated walkthrough of the **actual kernel source** for each of these pieces.
+
+## Try it
+
+**In your browser** — open the [live demo](https://mikebertin.github.io/kernel/).
+Click the screen and type; every keystroke is a real hardware interrupt handled
+by the kernel's own driver. Commands: `help`, `echo <text>`, `uptime`, `clear`,
+and `poke` (reach for kernel memory and get denied).
+
+**Locally, in QEMU:**
+
+```sh
+# toolchain (macOS): brew install i686-elf-gcc nasm qemu
+make          # build build/os-image.bin
+make run      # boot it in QEMU
+```
+
+Other targets: `make screenshot` (headless PNG of the screen), `make debug`
+(QEMU waiting for GDB on `:1234`), `make web` (stage the image for the browser
+demo).
+
+## How it's laid out
+
+| Path | What |
+|------|------|
+| `boot/boot.asm` | boot sector: real mode → load the kernel off disk → protected mode |
+| `kernel/*.c`, `kernel/*.asm` | the kernel — interrupts, memory, scheduler, syscalls, shell, fault handling |
+| `linker.ld` | flat layout: `_start` at `0x10000`, plus the isolated `.user_text` user-mode section |
+| `web/` | the in-browser demo (v86) and the annotated source walkthrough |
+
+- 32-bit i686, freestanding C (`-ffreestanding`, no standard library) + NASM assembly.
+- Built with an `i686-elf` cross-compiler; runs identically on QEMU and v86.
+
+## Why build this?
+
+To remove the last abstraction. Writing an OS by hand is the way to actually
+understand what a process is, what memory management costs, why a context switch
+is expensive, and what a system call really does — not as concepts, but as code
+you can point at. The aim was to end up with no black boxes left below the C.
+
+## License
+
+[MIT](LICENSE) — do whatever you like with it.

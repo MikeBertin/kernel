@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KERNEL — a from-scratch x86 OS you can boot in your browser</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="description" content="A complete x86 operating system written from scratch in C and assembly — boot sector to a ring-3 shell — booting live in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="KERNEL — an x86 OS from scratch, booting in your browser">
+<meta property="og:description" content="Hand-written boot sector, protected mode, interrupts, virtual memory, multitasking, and a ring-3 shell with real memory protection. The same disk image runs in QEMU and live in the browser.">
+<meta property="og:url" content="https://mikebertin.github.io/kernel/">
+<meta property="og:image" content="https://mikebertin.github.io/kernel/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   :root {
     --bg:#0b0e14; --panel:#11151f; --ink:#c8d0e0; --muted:#6b7686;
@@ -56,6 +64,17 @@
   code .n { color:var(--blue); }                  /* number  */
   code .k { color:#ff7b72; }                       /* keyword */
   footer { margin-top:56px; color:var(--muted); font-size:12.5px; text-align:center; }
+  footer a { color:var(--accent); }
+
+  /* narrow screens: shrink the fixed-width terminal so it fits, and tighten spacing */
+  @media (max-width: 640px) {
+    .wrap { padding:28px 14px 60px; }
+    h1 { font-size:20px; }
+    .crt { overflow-x:auto; padding:10px; }
+    #screen_container div { font-size:11px; }
+    pre { font-size:11.5px; }
+    .divider { margin:40px 0 8px; }
+  }
 </style>
 </head>
 <body>
@@ -313,7 +332,8 @@ if (c >= 32 && c &lt; 127) { line[n++] = c; s_putc(c); }</code></pre>
     <footer>
       A hand-written OS from the boot sector to a userspace shell with real
       memory protection — booting live in your browser.<br>
-      Built by hand in C and x86 assembly. No Linux, no libraries underneath.
+      Built by hand in C and x86 assembly. No Linux, no libraries underneath.<br>
+      <a href="https://github.com/MikeBertin/kernel">Source on GitHub →</a>
     </footer>
   </div>
 
@@ -327,7 +347,7 @@ if (c >= 32 && c &lt; 127) { line[n++] = c; s_putc(c); }</code></pre>
         wasm_path: "vendor/v86.wasm",
         bios:      { url: "vendor/seabios.bin" },
         vga_bios:  { url: "vendor/vgabios.bin" },
-        hda:       { url: "os-image.bin", size: 1048576, async: false },
+        hda:       { url: "os-image.bin?v=7", size: 1048576, async: false },
         autostart: true,
         memory_size: 32 * 1024 * 1024,
         vga_memory_size: 2 * 1024 * 1024,

@@ -30,7 +30,7 @@ void kmain(void) {
     vga_init();
 
     vga_set_color(VGA_LIGHT_GREEN, VGA_BLACK);
-    vga_puts("KERNEL booting — the whole stack, by hand.\n\n");
+    vga_puts("KERNEL booting - the whole stack, by hand.\n\n");
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
 
     gdt_install();     // GDT with user segments + TSS (needed for ring 3)
@@ -50,7 +50,7 @@ void kmain(void) {
     ok("timer on IRQ0, keyboard on IRQ1, interrupts live");
 
     vga_set_color(VGA_YELLOW, VGA_BLACK);
-    vga_puts("\nDropping to ring 3 — the shell below is unprivileged.\n");
+    vga_puts("\nDropping to ring 3 - the shell below is unprivileged.\n");
     vga_puts("Try 'poke' to watch it get denied when it touches kernel memory:\n");
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
 

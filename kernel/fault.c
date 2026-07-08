@@ -19,7 +19,7 @@ static void page_fault(registers_t *r) {
         vga_set_color(VGA_LIGHT_RED, VGA_BLACK);
         vga_puts("\n[page fault] ring 3 denied access to ");
         vga_put_hex(cr2);
-        vga_puts(" — that's kernel memory. Process killed; restarting shell.\n");
+        vga_puts(" - that's kernel memory. Process killed; restarting shell.\n");
         vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
 
         // Rewrite the interrupt frame so iret resumes the shell's command loop
@@ -35,7 +35,7 @@ static void page_fault(registers_t *r) {
     vga_put_hex(cr2);
     vga_puts(" eip=");
     vga_put_hex(r->eip);
-    vga_puts(" — halted.\n");
+    vga_puts(" - halted.\n");
     for (;;) __asm__ volatile ("cli; hlt");
 }
 

@@ -49,7 +49,7 @@ void isr_handler(registers_t *r) {
     vga_put_dec(r->int_no);
     vga_puts(" err=");
     vga_put_dec(r->err_code);
-    vga_puts(" — system halted.\n");
+    vga_puts(" - system halted.\n");
     for (;;) __asm__ volatile ("cli; hlt");
 }
 
