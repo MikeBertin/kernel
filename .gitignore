@@ -6,6 +6,9 @@ HANDOVER.md
 STATUS.md
 log.md
 
+# editor / tooling config (preview-server launch config) — local only
+.claude/
+
 # note: web/ IS tracked in full — the v86 runtime + BIOS (web/vendor/) and the
 # built disk image (web/os-image.bin, refreshed by `make web`) — so the browser
 # demo is self-contained and deployable to GitHub Pages. Rebuild + `make web`
