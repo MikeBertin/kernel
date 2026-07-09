@@ -14,98 +14,241 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>
   :root {
-    --bg:#0b0e14; --panel:#11151f; --ink:#c8d0e0; --muted:#6b7686;
-    --accent:#7ee787; --border:#1e2430; --amber:#e3b341; --blue:#79c0ff;
-    --code-bg:#0d1117;
+    --bg:#0a0d13; --bg2:#0d1119; --panel:#11151f; --ink:#c8d0e0; --muted:#6b7686;
+    --accent:#7ee787; --accent-dim:#2ea043; --border:#1c2230; --border2:#262d3d;
+    --amber:#e3b341; --blue:#79c0ff; --red:#ff7b72;
+    --violet:#a371f7; --cyan:#56d4dd; --code-bg:#0c0f16;
   }
   * { box-sizing:border-box; }
-  html,body { margin:0; background:var(--bg); color:var(--ink);
-    font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; }
-  .wrap { max-width:820px; margin:0 auto; padding:40px 20px 80px; }
-  h1 { font-size:23px; margin:0 0 4px; letter-spacing:.5px; }
-  h1 .prompt { color:var(--accent); }
-  .sub { color:var(--muted); margin:0 0 26px; font-size:13px; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:
+      radial-gradient(1200px 600px at 80% -10%, #10192a 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, #121022 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink); font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; }
   a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
 
-  /* live boot */
-  .crt { background:#000; border:1px solid var(--border); border-radius:6px;
-    padding:14px; box-shadow:0 0 0 1px #000, 0 20px 60px -20px #000; }
+  /* scroll progress */
+  #progress { position:fixed; top:0; left:0; height:2px; width:0;
+    background:linear-gradient(90deg,var(--accent),var(--cyan)); z-index:60;
+    box-shadow:0 0 8px var(--accent); transition:width .06s linear; }
+
+  /* app shell */
+  .app { display:grid; grid-template-columns:270px minmax(0,1fr); gap:0;
+    max-width:1220px; margin:0 auto; }
+
+  /* ── sidebar ── */
+  .side { position:sticky; top:0; align-self:start; height:100vh;
+    display:flex; flex-direction:column; padding:26px 20px 18px;
+    border-right:1px solid var(--border); }
+  .brand { font-size:20px; font-weight:700; letter-spacing:.5px; margin:0 0 2px; }
+  .brand .p { color:var(--accent); }
+  .brand-sub { color:var(--muted); font-size:11px; margin:0 0 16px; }
+  .side .status { color:var(--muted); font-size:11.5px; margin-bottom:18px; }
+  .side .status .dot { color:var(--amber); }
+  .side .status.live .dot { color:var(--accent); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  nav { flex:1; overflow-y:auto; margin:0 -6px; padding:0 6px; }
+  nav::-webkit-scrollbar { width:6px; } nav::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+  .phase { font-size:10px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--muted); margin:16px 8px 6px; opacity:.7; }
+  .phase:first-child { margin-top:0; }
+  nav a { display:flex; gap:9px; align-items:baseline; padding:5px 9px; border-radius:6px;
+    color:var(--muted); font-size:12.5px; line-height:1.35; text-decoration:none;
+    border-left:2px solid transparent; transition:.15s; }
+  nav a .num { color:var(--border2); font-size:11px; min-width:16px; transition:.15s; }
+  nav a:hover { color:var(--ink); background:#121826; text-decoration:none; }
+  nav a.active { color:var(--accent); border-left-color:var(--accent); background:#101a16; }
+  nav a.active .num { color:var(--accent); }
+
+  .side-foot { display:flex; gap:8px; align-items:center; padding-top:14px;
+    border-top:1px solid var(--border); margin-top:8px; font-size:12px; }
+  button { background:var(--panel); color:var(--ink); border:1px solid var(--border2);
+    border-radius:6px; padding:6px 12px; font:inherit; font-size:12px; cursor:pointer; transition:.15s; }
+  button:hover { border-color:var(--muted); color:#fff; }
+
+  /* ── main ── */
+  main { padding:40px 42px 90px; min-width:0; }
+  .hero h1 { font-size:30px; margin:0 0 10px; letter-spacing:.3px; line-height:1.15; }
+  .hero h1 .g { background:linear-gradient(90deg,var(--accent),var(--cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero .sub { color:var(--muted); font-size:14px; max-width:70ch; margin:0 0 22px; }
+
+  /* terminal */
+  .crt { background:#000; border:1px solid var(--border2); border-radius:9px;
+    overflow:hidden; box-shadow:0 24px 70px -28px #000, 0 0 0 1px #000,
+      inset 0 0 90px -30px var(--accent-dim); }
+  .crt-bar { display:flex; align-items:center; gap:8px; padding:9px 13px;
+    background:linear-gradient(#151b28,#0f131c); border-bottom:1px solid var(--border2); }
+  .crt-bar i { width:11px; height:11px; border-radius:50%; display:inline-block; }
+  .crt-bar .r{background:#ff5f56} .crt-bar .y{background:#ffbd2e} .crt-bar .g{background:#27c93f}
+  .crt-bar span { color:var(--muted); font-size:11.5px; margin-left:8px; }
+  .crt-screen { padding:14px; position:relative; }
+  .crt-screen::after { content:""; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(#0000 0 2px, #ffffff08 2px 3px); mix-blend-mode:overlay; opacity:.5; }
+  #screen_container { transform-origin:top left; }
   #screen_container div { white-space:pre; font:15px/1.06 ui-monospace,Menlo,monospace; color:#d8dee9; }
   #screen_container canvas { display:none; }
-  .bar { display:flex; gap:10px; align-items:center; margin:14px 0 6px; }
-  button { background:var(--panel); color:var(--ink); border:1px solid var(--border);
-    border-radius:5px; padding:7px 14px; font:inherit; font-size:13px; cursor:pointer; }
-  button:hover { border-color:var(--muted); }
-  .status { color:var(--muted); font-size:12px; }
-  .status .dot { color:var(--amber); }
-  .status.live .dot { color:var(--accent); }
-  .hint { color:var(--muted); font-size:12.5px; margin:14px 0 0; }
-  .hint code { color:var(--ink); }
+  .bar { display:flex; gap:10px; align-items:center; margin:13px 0 0; }
+  .hint { color:var(--muted); font-size:12.5px; margin:14px 0 0; max-width:74ch; }
+  .hint em { color:var(--accent); font-style:normal; }
 
-  /* walkthrough */
-  .divider { display:flex; align-items:center; gap:14px; margin:52px 0 8px; }
-  .divider h2 { font-size:15px; color:var(--ink); margin:0; white-space:nowrap; letter-spacing:.5px; }
-  .divider .rule { height:1px; background:var(--border); flex:1; }
-  .lead { color:var(--muted); font-size:13px; margin:0 0 8px; }
+  /* pinned mini terminal */
+  #mini { position:fixed; right:22px; bottom:22px; z-index:55; width:312px;
+    border:1px solid var(--border2); border-radius:8px; overflow:hidden; background:#000;
+    box-shadow:0 20px 50px -18px #000; cursor:pointer; opacity:0; transform:translateY(14px) scale(.96);
+    transition:.28s cubic-bezier(.2,.7,.3,1); pointer-events:none; }
+  #mini.show { opacity:1; transform:none; pointer-events:auto; }
+  #mini .mh { display:flex; align-items:center; gap:6px; padding:6px 10px;
+    background:#0f131c; border-bottom:1px solid var(--border2); font-size:10.5px; color:var(--muted); }
+  #mini .mh .dot { color:var(--accent); }
+  #mini .mbody { height:172px; overflow:hidden; }
+  #mini.host #screen_container { transform:scale(.40); }
 
-  .step { border:1px solid var(--border); border-radius:8px; margin:20px 0;
-    overflow:hidden; background:var(--panel); }
-  .step > header { padding:14px 16px 12px; }
-  .step .tag { font-size:11px; color:var(--accent); letter-spacing:1px; text-transform:uppercase; }
-  .step h3 { margin:4px 0 6px; font-size:16px; color:var(--ink); }
-  .step p { margin:0; color:var(--muted); font-size:13.5px; }
-  .step p em { color:var(--ink); font-style:normal; }
-  .step .file { display:block; font-size:11.5px; color:var(--muted); padding:8px 16px 0;
-    border-top:1px solid var(--border); background:var(--code-bg); }
-  pre { margin:0; padding:10px 16px 16px; background:var(--code-bg); overflow-x:auto;
+  /* ── walkthrough / timeline ── */
+  .wt-head { margin:60px 0 6px; }
+  .wt-head h2 { font-size:19px; margin:0 0 6px; }
+  .wt-head p { color:var(--muted); font-size:13px; margin:0; max-width:74ch; }
+
+  .timeline { position:relative; margin-top:26px; padding-left:34px; }
+  .timeline::before { content:""; position:absolute; left:9px; top:6px; bottom:40px;
+    width:2px; background:linear-gradient(var(--accent-dim),var(--border) 40%,var(--border)); }
+
+  .phase-row { position:relative; margin:30px 0 12px; }
+  .phase-row:first-child { margin-top:0; }
+  .phase-row .label { font-size:11px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--accent); font-weight:700; }
+  .phase-row::before { content:""; position:absolute; left:-31px; top:3px; width:14px; height:14px;
+    border-radius:50%; background:var(--bg); border:2px solid var(--accent); box-shadow:0 0 10px -1px var(--accent); }
+
+  .step { position:relative; margin:16px 0; border:1px solid var(--border);
+    border-radius:10px; overflow:hidden; background:linear-gradient(180deg,var(--panel),#0f131b);
+    opacity:0; transform:translateY(16px); transition:opacity .5s, transform .5s, border-color .18s, box-shadow .18s; }
+  .step.in { opacity:1; transform:none; }
+  .step:hover { border-color:var(--border2); box-shadow:0 0 0 1px var(--accent-dim), 0 16px 40px -26px var(--accent); }
+  .step::before { content:attr(data-n); position:absolute; left:-31px; top:16px; width:22px; height:22px;
+    display:grid; place-items:center; border-radius:50%; background:var(--bg2); border:1px solid var(--border2);
+    color:var(--muted); font-size:11px; transition:.18s; }
+  .step:hover::before { border-color:var(--accent); color:var(--accent); }
+  .step > header { padding:15px 18px 13px; }
+  .step .tag { font-size:10.5px; color:var(--accent); letter-spacing:1px; text-transform:uppercase; }
+  .step h3 { margin:5px 0 7px; font-size:16.5px; color:#eef2f8; }
+  .step p { margin:0; color:#9aa4b5; font-size:13.5px; }
+  .term { color:var(--ink); font-style:normal; border-bottom:1px dotted var(--muted);
+    cursor:help; position:relative; white-space:nowrap; }
+  .term:hover { color:var(--accent); border-bottom-color:var(--accent); }
+  .term::after { content:attr(data-tip); position:absolute; left:50%; bottom:150%; transform:translateX(-50%) translateY(4px);
+    background:#0a0d13; color:var(--ink); border:1px solid var(--border2); border-radius:7px;
+    padding:7px 10px; font-size:11.5px; line-height:1.45; white-space:normal; width:230px; text-align:left;
+    box-shadow:0 12px 30px -12px #000; opacity:0; pointer-events:none; transition:.16s; z-index:20; font-style:normal; }
+  .term:hover::after { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .code-wrap { position:relative; border-top:1px solid var(--border); }
+  .code-wrap .file { display:block; font-size:11.5px; color:var(--muted); padding:8px 16px 0; background:var(--code-bg); }
+  .copy { position:absolute; top:7px; right:9px; padding:3px 9px; font-size:10.5px;
+    opacity:0; transition:.16s; background:#131926; }
+  .code-wrap:hover .copy { opacity:1; }
+  .copy.done { color:var(--accent); border-color:var(--accent-dim); }
+  pre { margin:0; padding:8px 16px 16px; background:var(--code-bg); overflow-x:auto;
     font:13px/1.55 ui-monospace,Menlo,monospace; }
-  code .c { color:#6b7686; font-style:italic; }   /* comment */
-  code .s { color:var(--amber); }                 /* string  */
-  code .n { color:var(--blue); }                  /* number  */
-  code .k { color:#ff7b72; }                       /* keyword */
-  footer { margin-top:56px; color:var(--muted); font-size:12.5px; text-align:center; }
+  code .c { color:#6b7686; font-style:italic; }
+  code .s { color:var(--amber); }
+  code .n { color:var(--blue); }
+  code .k { color:var(--red); }
+
+  /* diagrams */
+  .diagram { margin:16px 0; border:1px solid var(--border); border-radius:10px;
+    background:linear-gradient(180deg,#0e1420,#0b0f17); padding:20px 18px 14px;
+    opacity:0; transform:translateY(16px); transition:.5s; }
+  .diagram.in { opacity:1; transform:none; }
+  .diagram .cap { color:var(--muted); font-size:12px; text-align:center; margin:6px 0 0; }
+  .diagram svg { width:100%; height:auto; display:block; }
+  .dgm-txt { font:12px ui-monospace,Menlo,monospace; }
+  .proc { transition:opacity .18s; cursor:default; }
+  .diagram:hover .proc { opacity:.32; }
+  .diagram .proc:hover { opacity:1; }
+  .ring { transition:.18s; }
+  .ring:hover { filter:brightness(1.35); }
+
+  footer { margin:56px 0 0; color:var(--muted); font-size:12.5px; line-height:1.7;
+    border-top:1px solid var(--border); padding-top:22px; }
   footer a { color:var(--accent); }
 
-  /* narrow screens: shrink the fixed-width terminal so it fits, and tighten spacing */
-  @media (max-width: 640px) {
-    .wrap { padding:28px 14px 60px; }
-    h1 { font-size:20px; }
-    .crt { overflow-x:auto; padding:10px; }
+  /* ── responsive ── */
+  @media (max-width:900px) {
+    .app { grid-template-columns:1fr; }
+    .side { position:static; height:auto; flex-direction:row; flex-wrap:wrap; align-items:center;
+      border-right:none; border-bottom:1px solid var(--border); gap:12px 18px; }
+    .side .status { margin:0; } nav { flex-basis:100%; order:5; display:flex; flex-wrap:wrap; overflow:visible; }
+    .phase { display:none; } nav a { border-left:none; border-bottom:2px solid transparent; padding:4px 8px; }
+    nav a.active { background:none; border-bottom-color:var(--accent); }
+    .side-foot { border-top:none; padding-top:0; margin:0; }
+    main { padding:26px 18px 70px; }
+    .hero h1 { font-size:24px; }
+    #mini { display:none; }
     #screen_container div { font-size:11px; }
-    pre { font-size:11.5px; }
-    .divider { margin:40px 0 8px; }
+  }
+  /* phones: drop the table-of-contents so the terminal is front-and-centre */
+  @media (max-width:600px) {
+    .side { padding:18px 16px; }
+    nav { display:none; }
   }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1><span class="prompt">$</span> KERNEL</h1>
-    <p class="sub">A from-scratch x86 operating system — hand-written boot sector, protected mode, interrupts, virtual memory, pre-emptive multitasking, and isolated userspace processes. Booting live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image runs in QEMU.</p>
+  <div id="progress"></div>
 
-    <div class="crt">
-      <div id="screen_container"><div></div><canvas></canvas></div>
-    </div>
-    <div class="bar">
-      <button id="restart">↻ reboot</button>
-      <span class="status" id="status"><span class="dot">●</span> booting…</span>
-    </div>
-    <p class="hint">Three user processes run at once, pre-empted by the timer. Each
-      reads the <em>same</em> virtual address (0xB0000000) but it maps to a
-      <em>different</em> physical frame per process — proof they're truly isolated.
-      The clock top-right ticks on the timer IRQ.</p>
+  <div class="app">
+    <!-- ── sidebar ── -->
+    <aside class="side">
+      <div>
+        <p class="brand"><span class="p">$</span> KERNEL</p>
+        <p class="brand-sub">an x86 OS from scratch</p>
+        <p class="status" id="status"><span class="dot">●</span> booting…</p>
+      </div>
+      <nav id="nav"></nav>
+      <div class="side-foot">
+        <button id="restart">↻ reboot</button>
+        <a href="https://github.com/MikeBertin/kernel">GitHub ↗</a>
+      </div>
+    </aside>
 
-    <div class="divider"><h2>How it works — the actual code</h2><div class="rule"></div></div>
-    <p class="lead">Every line below is really in the kernel booting above. Follow the machine coming up, from the first byte the BIOS runs to a working virtual-memory system.</p>
+    <!-- ── main ── -->
+    <main>
+      <section class="hero">
+        <h1>A hand-written x86 operating system,<br><span class="g">booting in your browser.</span></h1>
+        <p class="sub">Boot sector to isolated userspace processes — every layer in C and x86 assembly, no Linux and no libraries underneath. It runs live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image boots in QEMU.</p>
 
-    <!-- 1 -->
-    <div class="step">
-      <header>
-        <span class="tag">01 · boot</span>
-        <h3>512 bytes and a magic number</h3>
-        <p>The BIOS loads the first disk sector to <em>0x7C00</em> and jumps there in 16-bit real mode — but only if the sector ends in the signature <em>0x55 0xAA</em>. That tiny stub is all we get to bootstrap everything else.</p>
-      </header>
-      <span class="file">boot/boot.asm</span>
-      <pre><code data-lang="asm">[bits 16]
+        <div class="crt">
+          <div class="crt-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>kernel · 32-bit x86 · v86</span></div>
+          <div class="crt-screen">
+            <div id="screen_container"><div></div><canvas></canvas></div>
+          </div>
+        </div>
+        <p class="hint">Three user processes run at once, pre-empted by the timer. Each reads the
+          <em>same</em> virtual address (0xB0000000) but it maps to a <em>different</em> physical
+          frame per process — proof they're truly isolated. The clock top-right ticks on the timer IRQ.</p>
+      </section>
+
+      <div class="wt-head">
+        <h2>How it works — the actual code</h2>
+        <p>Every snippet below is really in the kernel booting above. Follow the machine come up, from the first byte the BIOS runs all the way to isolated processes.</p>
+      </div>
+
+      <div class="timeline" id="timeline">
+
+        <div class="phase-row" id="ph-boot"><span class="label">Boot</span></div>
+
+        <div class="step" id="s1" data-n="01" data-phase="boot">
+          <header>
+            <span class="tag">01 · boot</span>
+            <h3>512 bytes and a magic number</h3>
+            <p>The BIOS loads the first disk sector to <span class="term" data-tip="Physical address 0x7C00 — the fixed spot the BIOS copies the boot sector to and jumps to.">0x7C00</span> and jumps there in 16-bit real mode — but only if the sector ends in the signature <span class="term" data-tip="The 2-byte boot signature 0x55 0xAA. No signature, no boot.">0x55 0xAA</span>. That tiny stub is all we get to bootstrap everything else.</p>
+          </header>
+          <div class="code-wrap"><span class="file">boot/boot.asm</span>
+          <pre><code data-lang="asm">[bits 16]
 [org 0x7C00]            ; the BIOS drops us here, still a 1978-era 8086
 
     mov ax, 0x0003     ; ask the video BIOS for 80x25 colour text mode
@@ -115,101 +258,99 @@
     call switch_to_pm  ; leave real mode behind — never returns
 
 times 510 - ($ - $$) db 0   ; pad to 510 bytes...
-dw 0xAA55                    ; ...then the signature the BIOS checks for</code></pre>
-    </div>
+dw 0xAA55                    ; ...then the signature the BIOS checks for</code></pre></div>
+        </div>
 
-    <!-- 2 -->
-    <div class="step">
-      <header>
-        <span class="tag">02 · protected mode</span>
-        <h3>Escaping real mode by hand</h3>
-        <p>We load a <em>flat GDT</em> (code + data segments each spanning all 4 GiB), set the protection-enable bit, then <em>far-jump</em> — which is what actually reloads <em>CS</em> and drops the CPU into 32-bit protected mode.</p>
-      </header>
-      <span class="file">boot/boot.asm</span>
-      <pre><code data-lang="asm">switch_to_pm:
+        <div class="step" id="s2" data-n="02" data-phase="boot">
+          <header>
+            <span class="tag">02 · protected mode</span>
+            <h3>Escaping real mode by hand</h3>
+            <p>We load a <span class="term" data-tip="Global Descriptor Table — a flat layout where code + data segments each span the whole 4 GiB, so segmentation gets out of the way.">flat GDT</span>, set the protection-enable bit, then <em>far-jump</em> — which is what actually reloads <span class="term" data-tip="CR0.PE: the protection-enable bit. Setting it turns on 32-bit protected mode.">CS</span> and drops the CPU into 32-bit protected mode.</p>
+          </header>
+          <div class="code-wrap"><span class="file">boot/boot.asm</span>
+          <pre><code data-lang="asm">switch_to_pm:
     cli
     lgdt [gdt_descriptor]   ; describe our flat segment layout to the CPU
     mov eax, cr0
     or  eax, 0x1            ; CR0.PE = 1 — turn on protected mode
     mov cr0, eax
-    jmp CODE_SEG:init_pm    ; far jump flushes the pipeline, loads a 32-bit CS</code></pre>
-    </div>
+    jmp CODE_SEG:init_pm    ; far jump flushes the pipeline, loads a 32-bit CS</code></pre></div>
+        </div>
 
-    <!-- 3 -->
-    <div class="step">
-      <header>
-        <span class="tag">03 · output</span>
-        <h3>The screen is just memory</h3>
-        <p>No driver stack, no BIOS call. VGA text mode is memory-mapped at <em>0xB8000</em>: each cell is a character byte plus a colour attribute byte. Write a 16-bit word and a character appears.</p>
-      </header>
-      <span class="file">kernel/vga.c</span>
-      <pre><code data-lang="c">#define VGA_MEMORY ((volatile uint16_t *)0xB8000)
+        <div class="step" id="s3" data-n="03" data-phase="boot">
+          <header>
+            <span class="tag">03 · output</span>
+            <h3>The screen is just memory</h3>
+            <p>No driver stack, no BIOS call. VGA text mode is memory-mapped at <span class="term" data-tip="0xB8000 — the VGA text buffer. 80×25 cells, two bytes each: a character and a colour attribute.">0xB8000</span>: each cell is a character byte plus a colour attribute byte. Write a 16-bit word and a character appears.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/vga.c</span>
+          <pre><code data-lang="c">#define VGA_MEMORY ((volatile uint16_t *)0xB8000)
 
 // low byte = character, high byte = attribute (background &lt;&lt; 4 | foreground)
 static inline uint16_t vga_entry(char c, uint8_t attr) {
     return (uint16_t)c | ((uint16_t)attr &lt;&lt; 8);
 }
-VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre>
-    </div>
+VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre></div>
+        </div>
 
-    <!-- 4 -->
-    <div class="step">
-      <header>
-        <span class="tag">04 · interrupts</span>
-        <h3>A jump table for the CPU</h3>
-        <p>The <em>IDT</em> tells the CPU where to go when interrupt <em>N</em> fires. Each gate stores a handler address split across two halves; <em>0x8E</em> marks it a present, ring-0, 32-bit interrupt gate.</p>
-      </header>
-      <span class="file">kernel/idt.c</span>
-      <pre><code data-lang="c">void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
+        <div class="phase-row" id="ph-int"><span class="label">Interrupts</span></div>
+
+        <div class="step" id="s4" data-n="04" data-phase="int">
+          <header>
+            <span class="tag">04 · interrupts</span>
+            <h3>A jump table for the CPU</h3>
+            <p>The <span class="term" data-tip="Interrupt Descriptor Table — 256 gates telling the CPU which handler to run for each interrupt vector.">IDT</span> tells the CPU where to go when interrupt <em>N</em> fires. Each gate stores a handler address split across two halves; <em>0x8E</em> marks it a present, ring-0, 32-bit interrupt gate.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/idt.c</span>
+          <pre><code data-lang="c">void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
     idt[num].base_low  = base &amp; 0xFFFF;
     idt[num].base_high = (base &gt;&gt; 16) &amp; 0xFFFF;
     idt[num].selector  = sel;      // our kernel code segment, 0x08
     idt[num].flags     = flags;    // 0x8E = present, ring 0, interrupt gate
-}</code></pre>
-    </div>
+}</code></pre></div>
+        </div>
 
-    <!-- 5 -->
-    <div class="step">
-      <header>
-        <span class="tag">05 · interrupts</span>
-        <h3>Defusing a legacy landmine</h3>
-        <p>The 8259 <em>PIC</em> delivers hardware IRQs on vectors that, by default, collide with the CPU's own exception vectors — a timer tick would look like a double fault. We remap it so IRQs land safely on vectors 32–47.</p>
-      </header>
-      <span class="file">kernel/isr.c</span>
-      <pre><code data-lang="c">void pic_remap(void) {
+        <div class="step" id="s5" data-n="05" data-phase="int">
+          <header>
+            <span class="tag">05 · interrupts</span>
+            <h3>Defusing a legacy landmine</h3>
+            <p>The 8259 <span class="term" data-tip="Programmable Interrupt Controller. Its default IRQ vectors overlap the CPU's exception vectors, so we remap them to 32–47.">PIC</span> delivers hardware IRQs on vectors that, by default, collide with the CPU's own exception vectors — a timer tick would look like a double fault. We remap it so IRQs land safely on vectors 32–47.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/isr.c</span>
+          <pre><code data-lang="c">void pic_remap(void) {
     outb(PIC1_CMD, 0x11);  outb(PIC2_CMD, 0x11);   // begin init
     outb(PIC1_DATA, 0x20); outb(PIC2_DATA, 0x28);  // master-&gt;32, slave-&gt;40
     outb(PIC1_DATA, 0x04); outb(PIC2_DATA, 0x02);  // wire the cascade
     outb(PIC1_DATA, 0x01); outb(PIC2_DATA, 0x01);  // 8086 mode
     outb(PIC1_DATA, 0x00); outb(PIC2_DATA, 0x00);  // unmask every line
-}</code></pre>
-    </div>
+}</code></pre></div>
+        </div>
 
-    <!-- 6 -->
-    <div class="step">
-      <header>
-        <span class="tag">06 · keyboard</span>
-        <h3>Every keystroke is an interrupt</h3>
-        <p>Press a key and the controller raises <em>IRQ1</em>. Our handler reads the raw scancode from port <em>0x60</em>, ignores key-release codes, translates to ASCII, and echoes it — exactly what you're doing when you type in the box above.</p>
-      </header>
-      <span class="file">kernel/keyboard.c</span>
-      <pre><code data-lang="c">static void keyboard_callback(registers_t *r) {
+        <div class="step" id="s6" data-n="06" data-phase="int">
+          <header>
+            <span class="tag">06 · keyboard</span>
+            <h3>Every keystroke is an interrupt</h3>
+            <p>Press a key and the controller raises <span class="term" data-tip="IRQ1 — the keyboard's interrupt line. It fires on every key press and release.">IRQ1</span>. Our handler reads the raw scancode from port <em>0x60</em>, ignores key-release codes, translates to ASCII, and buffers it for a reader.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/keyboard.c</span>
+          <pre><code data-lang="c">static void keyboard_callback(registers_t *r) {
     uint8_t scancode = inb(0x60);       // read the key from the controller
     if (scancode &amp; 0x80) return;        // top bit set = key released; ignore
     char c = scancode_ascii[scancode];  // scancode -&gt; ASCII
-    if (c) vga_putc(c);
-}</code></pre>
-    </div>
+    if (c) buffer_push(c);
+}</code></pre></div>
+        </div>
 
-    <!-- 7 -->
-    <div class="step">
-      <header>
-        <span class="tag">07 · physical memory</span>
-        <h3>Handing out RAM, one frame at a time</h3>
-        <p>Physical memory is carved into 4 KiB <em>frames</em>, one bit each in a bitmap: 1 used, 0 free. Everything above — page tables, the heap — ultimately draws its memory from here.</p>
-      </header>
-      <span class="file">kernel/pmm.c</span>
-      <pre><code data-lang="c">uint32_t pmm_alloc_frame(void) {
+        <div class="phase-row" id="ph-mem"><span class="label">Memory</span></div>
+
+        <div class="step" id="s7" data-n="07" data-phase="mem">
+          <header>
+            <span class="tag">07 · physical memory</span>
+            <h3>Handing out RAM, one frame at a time</h3>
+            <p>Physical memory is carved into 4 KiB <em>frames</em>, one bit each in a bitmap: 1 used, 0 free. Everything above — page tables, the heap — ultimately draws its memory from here.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/pmm.c</span>
+          <pre><code data-lang="c">uint32_t pmm_alloc_frame(void) {
     for (uint32_t f = 0; f &lt; TOTAL_FRAMES; f++) {
         if (!is_used(f)) {
             set_used(f);
@@ -217,18 +358,17 @@ VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre>
         }
     }
     return 0;   // out of physical memory
-}</code></pre>
-    </div>
+}</code></pre></div>
+        </div>
 
-    <!-- 8 -->
-    <div class="step">
-      <header>
-        <span class="tag">08 · virtual memory</span>
-        <h3>Turning on the illusion</h3>
-        <p><em>map_page</em> points a virtual page at a physical frame through the two-level page tables; <em>invlpg</em> drops the stale cached translation. Then we load <em>CR3</em> and set <em>CR0.PG</em> — and from the very next instruction, every address the CPU touches is virtual.</p>
-      </header>
-      <span class="file">kernel/paging.c</span>
-      <pre><code data-lang="c">void map_page(uint32_t virt, uint32_t phys, uint32_t flags) {
+        <div class="step" id="s8" data-n="08" data-phase="mem">
+          <header>
+            <span class="tag">08 · virtual memory</span>
+            <h3>Turning on the illusion</h3>
+            <p><em>map_page</em> points a virtual page at a physical frame through the two-level page tables; <em>invlpg</em> drops the stale cached translation. Then we load <span class="term" data-tip="CR3 holds the physical address of the active page directory — the root of the current address space.">CR3</span> and set <span class="term" data-tip="CR0.PG — the paging-enable bit. From the next instruction, every address is virtual.">CR0.PG</span>, and every address the CPU touches becomes virtual.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/paging.c</span>
+          <pre><code data-lang="c">void map_page(uint32_t virt, uint32_t phys, uint32_t flags) {
     uint32_t pd = virt &gt;&gt; 22, pt = (virt &gt;&gt; 12) &amp; 0x3FF;
     // ...allocate a page table for this region if none exists yet...
     page_table[pt] = (phys &amp; ~0xFFF) | flags | PAGE_PRESENT;
@@ -237,18 +377,17 @@ VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre>
 
 asm("mov %0, %%cr3" :: "r"(page_directory));   // point the MMU at our tables
 cr0 |= 0x80000000;                             // CR0.PG — paging is now on
-asm("mov %0, %%cr0" :: "r"(cr0));</code></pre>
-    </div>
+asm("mov %0, %%cr0" :: "r"(cr0));</code></pre></div>
+        </div>
 
-    <!-- 9 -->
-    <div class="step">
-      <header>
-        <span class="tag">09 · heap</span>
-        <h3>kmalloc, from nothing</h3>
-        <p>A first-fit walk over a linked list of blocks: find a free one big enough, split off the surplus, hand back the payload. <em>kfree</em> marks it free and coalesces with its neighbour — which is why, in the boot log, a freed block gets reused on the next allocation.</p>
-      </header>
-      <span class="file">kernel/heap.c</span>
-      <pre><code data-lang="c">void *kmalloc(size_t size) {
+        <div class="step" id="s9" data-n="09" data-phase="mem">
+          <header>
+            <span class="tag">09 · heap</span>
+            <h3>kmalloc, from nothing</h3>
+            <p>A first-fit walk over a linked list of blocks: find a free one big enough, split off the surplus, hand back the payload. <em>kfree</em> marks it free and coalesces with its neighbour so the heap doesn't fragment into confetti.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/heap.c</span>
+          <pre><code data-lang="c">void *kmalloc(size_t size) {
     for (block_t *b = head; b; b = b-&gt;next) {
         if (b-&gt;free &amp;&amp; b-&gt;size &gt;= size) {
             split(b, size);       // carve off any surplus as a new free block
@@ -257,18 +396,19 @@ asm("mov %0, %%cr0" :: "r"(cr0));</code></pre>
         }
     }
     return NULL;   // out of heap
-}</code></pre>
-    </div>
+}</code></pre></div>
+        </div>
 
-    <!-- 10 -->
-    <div class="step">
-      <header>
-        <span class="tag">10 · multitasking</span>
-        <h3>What a context switch actually is</h3>
-        <p>Startlingly small. Save the outgoing task's registers, stash its stack pointer, load the next task's, restore its registers — the final <em>ret</em> resumes it exactly where it left off. Driven by the timer IRQ, this is pre-emptive multitasking: the three counters climbing in the boot screen above are three tasks being frozen and thawed, hundreds of times a second.</p>
-      </header>
-      <span class="file">kernel/switch.asm</span>
-      <pre><code data-lang="asm">context_switch:            ; (uint32_t *save_old_esp, uint32_t new_esp)
+        <div class="phase-row" id="ph-mt"><span class="label">Multitasking</span></div>
+
+        <div class="step" id="s10" data-n="10" data-phase="mt">
+          <header>
+            <span class="tag">10 · multitasking</span>
+            <h3>What a context switch actually is</h3>
+            <p>Startlingly small. Save the outgoing task's registers, stash its stack pointer, load the next task's, restore its registers — the final <em>ret</em> resumes it exactly where it left off. Driven by the timer IRQ, this is pre-emptive multitasking.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/switch.asm</span>
+          <pre><code data-lang="asm">context_switch:            ; (uint32_t *save_old_esp, uint32_t new_esp)
     mov eax, [esp + 4]     ; where to save the outgoing esp
     mov edx, [esp + 8]     ; the incoming task's saved esp
     push ebp               ; preserve the callee-saved registers
@@ -281,42 +421,61 @@ asm("mov %0, %%cr0" :: "r"(cr0));</code></pre>
     pop esi
     pop ebx
     pop ebp
-    ret                    ; ...and resume it where it last left off</code></pre>
-    </div>
+    ret                    ; ...and resume it where it last left off</code></pre></div>
+        </div>
 
-    <!-- 11 -->
-    <div class="step">
-      <header>
-        <span class="tag">11 · userspace</span>
-        <h3>The one guarded doorway</h3>
-        <p>The shell prompt above runs in <em>ring 3</em> — unprivileged. It can't touch hardware or kernel memory directly; its only channel in is <em>int 0x80</em>, a gate we deliberately made callable from ring 3. It loads a call number in EAX and traps into the kernel, which does the privileged work and hands back a result. That trap boundary is what a system call actually is.</p>
-      </header>
-      <span class="file">kernel/shell.c</span>
-      <pre><code data-lang="c">// running in ring 3 — the ONLY way to reach the kernel
+        <div class="phase-row" id="ph-user"><span class="label">Userspace</span></div>
+
+        <div class="step" id="s11" data-n="11" data-phase="user">
+          <header>
+            <span class="tag">11 · userspace</span>
+            <h3>The one guarded doorway</h3>
+            <p>User programs run in <span class="term" data-tip="Ring 3 — the CPU's least-privileged level. No hardware access, no kernel memory; syscalls only.">ring 3</span> — unprivileged. Their only channel into the kernel is <span class="term" data-tip="int 0x80 — a software interrupt gate we deliberately made callable from ring 3. This is a system call.">int 0x80</span>, a gate that traps into the kernel, which does the privileged work and hands back a result. That trap boundary is what a system call actually is.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/shell.c</span>
+          <pre><code data-lang="c">// running in ring 3 — the ONLY way to reach the kernel
 static char s_read(void) {
     uint32_t c;
     asm volatile("int $0x80" : "=a"(c) : "a"(SYS_READ) : "memory");
     return (char)c;               // the kernel read a key on our behalf
-}
+}</code></pre></div>
+        </div>
 
-// the shell loop: read a key, echo it, run the command — all via syscalls
-char c = s_read();
-if (c >= 32 && c &lt; 127) { line[n++] = c; s_putc(c); }</code></pre>
-    </div>
+        <div class="diagram" id="d-ring">
+          <svg viewBox="0 0 620 200" role="img" aria-label="ring 0 kernel and ring 3 userspace, bridged by int 0x80">
+            <defs>
+              <radialGradient id="rg" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#132018"/><stop offset="100%" stop-color="#0c0f16"/>
+              </radialGradient>
+            </defs>
+            <g class="ring">
+              <ellipse cx="200" cy="100" rx="185" ry="88" fill="none" stroke="#2a3346" stroke-width="1.5"/>
+              <text x="200" y="30" text-anchor="middle" class="dgm-txt" fill="#6b7686">RING 3 · user processes (unprivileged)</text>
+            </g>
+            <g class="ring">
+              <ellipse cx="200" cy="105" rx="96" ry="52" fill="url(#rg)" stroke="#7ee787" stroke-width="1.5"/>
+              <text x="200" y="101" text-anchor="middle" class="dgm-txt" fill="#7ee787">RING 0</text>
+              <text x="200" y="119" text-anchor="middle" class="dgm-txt" fill="#6b7686">the kernel</text>
+            </g>
+            <g class="ring">
+              <line x1="415" y1="105" x2="520" y2="105" stroke="#79c0ff" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <rect x="452" y="90" width="30" height="30" rx="5" fill="#0c0f16" stroke="#79c0ff"/>
+              <text x="467" y="109" text-anchor="middle" class="dgm-txt" fill="#79c0ff">↩</text>
+              <text x="540" y="101" text-anchor="middle" class="dgm-txt" fill="#79c0ff">int 0x80</text>
+              <text x="540" y="118" text-anchor="middle" class="dgm-txt" fill="#6b7686">syscall</text>
+            </g>
+          </svg>
+          <p class="cap">Ring 3 can't touch hardware or kernel memory — the only way in is the syscall gate.</p>
+        </div>
 
-    <!-- 12 -->
-    <div class="step">
-      <header>
-        <span class="tag">12 · protection</span>
-        <h3>Catching a memory violation</h3>
-        <p>Kernel pages are mapped supervisor-only; only a process's own code and
-        data carry the user bit. If ring-3 code reaches for memory it doesn't own,
-        the CPU raises a <em>page fault</em> with the offending address in <em>CR2</em>.
-        The handler reads it, reports which process misbehaved, and stops — the
-        raw material a real OS uses to kill a process cleanly.</p>
-      </header>
-      <span class="file">kernel/fault.c</span>
-      <pre><code data-lang="c">static void page_fault(registers_t *r) {
+        <div class="step" id="s12" data-n="12" data-phase="user">
+          <header>
+            <span class="tag">12 · protection</span>
+            <h3>Catching a memory violation</h3>
+            <p>Kernel pages are mapped supervisor-only; only a process's own code and data carry the user bit. If ring-3 code reaches for memory it doesn't own, the CPU raises a <em>page fault</em> with the offending address in <span class="term" data-tip="CR2 holds the faulting linear address after a page fault — the exact address the code tried to touch.">CR2</span>. The handler reads it, reports which process misbehaved, and stops.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/fault.c</span>
+          <pre><code data-lang="c">static void page_fault(registers_t *r) {
     uint32_t cr2;                              // the address that faulted
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
 
@@ -324,23 +483,17 @@ if (c >= 32 && c &lt; 127) { line[n++] = c; s_putc(c); }</code></pre>
         // "user process N touched &lt;cr2&gt; ..." — a userspace access violation
     }
     // ...report cr2 / eip / error code, then halt.
-}</code></pre>
-    </div>
+}</code></pre></div>
+        </div>
 
-    <!-- 13 -->
-    <div class="step">
-      <header>
-        <span class="tag">13 · isolation</span>
-        <h3>What a process really is</h3>
-        <p>Each process gets its <em>own</em> page directory — its own map from
-        virtual to physical memory. On every context switch the scheduler loads
-        that process's <em>CR3</em> (and its kernel stack via the TSS). That's why,
-        in the boot screen above, three processes read the identical virtual
-        address <em>0xB0000000</em> yet each sees a different physical frame: they
-        are genuinely separate address spaces and cannot touch each other's memory.</p>
-      </header>
-      <span class="file">kernel/sched.c</span>
-      <pre><code data-lang="c">void schedule(void) {                    // called from the timer IRQ
+        <div class="step" id="s13" data-n="13" data-phase="user">
+          <header>
+            <span class="tag">13 · isolation</span>
+            <h3>What a process really is</h3>
+            <p>Each process gets its <em>own</em> page directory — its own map from virtual to physical memory. On every context switch the scheduler loads that process's <span class="term" data-tip="CR3 selects the active page directory. Swapping it swaps the entire virtual→physical mapping — the whole address space.">CR3</span> (and its kernel stack via the TSS). That's why the three processes above read the identical virtual address <em>0xB0000000</em> yet each sees a different physical frame.</p>
+          </header>
+          <div class="code-wrap"><span class="file">kernel/sched.c</span>
+          <pre><code data-lang="c">void schedule(void) {                    // called from the timer IRQ
     task_t *prev = current;
     current = current-&gt;next;              // round-robin to the next process
     if (prev == current) return;
@@ -348,44 +501,153 @@ if (c >= 32 && c &lt; 127) { line[n++] = c; s_putc(c); }</code></pre>
     tss_set_kernel_stack(current-&gt;kstack_top);  // where its ring-3 traps land
     paging_switch(current-&gt;page_dir);           // its address space (load CR3)
     context_switch(&amp;prev-&gt;esp, current-&gt;esp);   // its saved kernel context
-}</code></pre>
-    </div>
+}</code></pre></div>
+        </div>
 
-    <footer>
-      A hand-written OS from the boot sector to isolated userspace processes,
-      each in its own address space — booting live in your browser.<br>
-      Built by hand in C and x86 assembly. No Linux, no libraries underneath.<br>
-      <a href="https://github.com/MikeBertin/kernel">Source on GitHub →</a>
-    </footer>
+        <div class="diagram" id="d-iso">
+          <svg viewBox="0 0 640 210" role="img" aria-label="three processes, same virtual address, different physical frames">
+            <text x="320" y="18" text-anchor="middle" class="dgm-txt" fill="#6b7686">same virtual address 0xB0000000  →  a different physical frame per process</text>
+            <!-- physical memory strip -->
+            <rect x="470" y="40" width="150" height="150" rx="6" fill="#0c0f16" stroke="#2a3346"/>
+            <text x="545" y="58" text-anchor="middle" class="dgm-txt" fill="#6b7686">physical RAM</text>
+            <g class="proc" data-c="#7ee787">
+              <rect x="20" y="44" width="150" height="40" rx="6" fill="#101a16" stroke="#7ee787"/>
+              <text x="95" y="61" text-anchor="middle" class="dgm-txt" fill="#7ee787">proc 0</text>
+              <text x="95" y="77" text-anchor="middle" class="dgm-txt" fill="#8b93a3">VA 0xB0000000</text>
+              <path d="M170 64 C 320 64, 340 84, 468 84" fill="none" stroke="#7ee787" stroke-width="1.5"/>
+              <rect x="482" y="72" width="126" height="22" rx="4" fill="#101a16" stroke="#7ee787"/>
+              <text x="545" y="87" text-anchor="middle" class="dgm-txt" fill="#7ee787">phys 0x6E000</text>
+            </g>
+            <g class="proc" data-c="#79c0ff">
+              <rect x="20" y="100" width="150" height="40" rx="6" fill="#0f1722" stroke="#79c0ff"/>
+              <text x="95" y="117" text-anchor="middle" class="dgm-txt" fill="#79c0ff">proc 1</text>
+              <text x="95" y="133" text-anchor="middle" class="dgm-txt" fill="#8b93a3">VA 0xB0000000</text>
+              <path d="M170 120 C 320 120, 340 124, 468 124" fill="none" stroke="#79c0ff" stroke-width="1.5"/>
+              <rect x="482" y="113" width="126" height="22" rx="4" fill="#0f1722" stroke="#79c0ff"/>
+              <text x="545" y="128" text-anchor="middle" class="dgm-txt" fill="#79c0ff">phys 0x76000</text>
+            </g>
+            <g class="proc" data-c="#e3b341">
+              <rect x="20" y="156" width="150" height="40" rx="6" fill="#1a1710" stroke="#e3b341"/>
+              <text x="95" y="173" text-anchor="middle" class="dgm-txt" fill="#e3b341">proc 2</text>
+              <text x="95" y="189" text-anchor="middle" class="dgm-txt" fill="#8b93a3">VA 0xB0000000</text>
+              <path d="M170 176 C 320 176, 340 164, 468 164" fill="none" stroke="#e3b341" stroke-width="1.5"/>
+              <rect x="482" y="153" width="126" height="22" rx="4" fill="#1a1710" stroke="#e3b341"/>
+              <text x="545" y="168" text-anchor="middle" class="dgm-txt" fill="#e3b341">phys 0x7E000</text>
+            </g>
+          </svg>
+          <p class="cap">Hover a process to trace its mapping — three separate address spaces, one CR3 each.</p>
+        </div>
+
+      </div>
+
+      <footer>
+        A hand-written OS from the boot sector to isolated userspace processes, each in its own
+        address space — booting live in your browser.<br>
+        Built by hand in C and x86 assembly. No Linux, no libraries underneath.
+        &nbsp;·&nbsp; <a href="https://github.com/MikeBertin/kernel">Source on GitHub →</a>
+      </footer>
+    </main>
+  </div>
+
+  <!-- pinned mini terminal -->
+  <div id="mini" title="Back to top">
+    <div class="mh"><span class="dot">●</span> KERNEL · live</div>
+    <div class="mbody" id="mini-body"></div>
   </div>
 
   <script src="vendor/libv86.js"></script>
   <script>
-    // --- boot the real OS image in v86 ---
+    // ── boot the real OS image in v86 ──
     const V86Ctor = window.V86 || window.V86Starter;
     const statusEl = document.getElementById("status");
-    function boot() {
-      const emulator = new V86Ctor({
-        wasm_path: "vendor/v86.wasm",
-        bios:      { url: "vendor/seabios.bin" },
-        vga_bios:  { url: "vendor/vgabios.bin" },
-        hda:       { url: "os-image.bin?v=7", size: 1048576, async: false },
-        autostart: true,
-        memory_size: 32 * 1024 * 1024,
-        vga_memory_size: 2 * 1024 * 1024,
-        screen_container: document.getElementById("screen_container"),
-      });
-      emulator.add_listener("emulator-ready", () => {
-        statusEl.classList.add("live");
-        statusEl.innerHTML = '<span class="dot">●</span> live — running our kernel';
-      });
-      document.getElementById("restart").onclick = () => emulator.restart();
-      window.__emu = emulator;
-    }
-    boot();
+    const emulator = new V86Ctor({
+      wasm_path: "vendor/v86.wasm",
+      bios:      { url: "vendor/seabios.bin" },
+      vga_bios:  { url: "vendor/vgabios.bin" },
+      hda:       { url: "os-image.bin?v=7", size: 1048576, async: false },
+      autostart: true,
+      memory_size: 32 * 1024 * 1024,
+      vga_memory_size: 2 * 1024 * 1024,
+      screen_container: document.getElementById("screen_container"),
+    });
+    emulator.add_listener("emulator-ready", () => {
+      statusEl.classList.add("live");
+      statusEl.innerHTML = '<span class="dot">●</span> live · running our kernel';
+    });
+    document.getElementById("restart").onclick = () => emulator.restart();
+    window.__emu = emulator;
 
-    // --- lightweight syntax highlighter for the code excerpts ---
-    const KEYWORDS = /\b(void|int|char|uint\d*_t|size_t|static|inline|struct|return|for|if|while|asm|volatile|mov|jmp|call|cli|lgdt|or|cmp|times|db|dw|equ)\b/g;
+    // ── build the sidebar nav from the steps ──
+    const PHASES = { boot:"Boot", int:"Interrupts", mem:"Memory", mt:"Multitasking", user:"Userspace" };
+    const nav = document.getElementById("nav");
+    let curPhase = null;
+    document.querySelectorAll(".step").forEach(step => {
+      const ph = step.dataset.phase;
+      if (ph !== curPhase) {
+        const h = document.createElement("div"); h.className = "phase"; h.textContent = PHASES[ph];
+        nav.appendChild(h); curPhase = ph;
+      }
+      const a = document.createElement("a");
+      a.href = "#" + step.id;
+      a.innerHTML = '<span class="num">' + step.dataset.n + '</span>' + step.querySelector("h3").textContent;
+      nav.appendChild(a);
+    });
+    const navLinks = [...nav.querySelectorAll("a")];
+
+    // ── scroll-spy: highlight the nav entry nearest the top ──
+    const spy = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          navLinks.forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#" + e.target.id));
+        }
+      });
+    }, { rootMargin: "-15% 0px -70% 0px", threshold: 0 });
+    document.querySelectorAll(".step").forEach(s => spy.observe(s));
+
+    // ── reveal-on-scroll for steps + diagrams ──
+    const reveal = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); reveal.unobserve(e.target); } });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+    document.querySelectorAll(".step, .diagram").forEach(el => reveal.observe(el));
+
+    // ── scroll progress bar ──
+    const prog = document.getElementById("progress");
+    addEventListener("scroll", () => {
+      const h = document.documentElement;
+      prog.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + "%";
+    }, { passive: true });
+
+    // ── copy buttons on code blocks ──
+    document.querySelectorAll(".code-wrap").forEach(wrap => {
+      const btn = document.createElement("button");
+      btn.className = "copy"; btn.textContent = "copy";
+      btn.onclick = () => {
+        navigator.clipboard.writeText(wrap.querySelector("code").textContent.trim());
+        btn.textContent = "copied ✓"; btn.classList.add("done");
+        setTimeout(() => { btn.textContent = "copy"; btn.classList.remove("done"); }, 1400);
+      };
+      wrap.appendChild(btn);
+    });
+
+    // ── pinned mini terminal: move the live screen into a corner when scrolled past ──
+    const sc = document.getElementById("screen_container");
+    const heroSlot = sc.parentElement;         // .crt-screen
+    const miniBody = document.getElementById("mini-body");
+    const mini = document.getElementById("mini");
+    const heroTerm = document.querySelector(".crt");
+    let inMini = false;
+    const setMini = on => {
+      if (on === inMini) return; inMini = on;
+      if (on) { miniBody.appendChild(sc); mini.classList.add("show", "host"); }
+      else    { heroSlot.appendChild(sc); mini.classList.remove("show", "host"); }
+      // keep v86 rendering after the move
+      if (emulator.screen_adapter && emulator.screen_adapter.init) { try { emulator.screen_adapter.init(); } catch(e){} }
+    };
+    new IntersectionObserver(([e]) => setMini(!e.isIntersecting), { threshold: 0 }).observe(heroTerm);
+    mini.onclick = () => scrollTo({ top: 0, behavior: "smooth" });
+
+    // ── lightweight syntax highlighter for the code excerpts ──
+    const KEYWORDS = /\b(void|int|char|uint\d*_t|size_t|static|inline|struct|return|for|if|while|asm|volatile|mov|jmp|call|cli|lgdt|or|cmp|times|db|dw|equ|push|pop|ret)\b/g;
     function commentIndex(line, marker) {
       let inStr = false;
       for (let i = 0; i < line.length; i++) {
@@ -409,9 +671,7 @@ if (c >= 32 && c &lt; 127) { line[n++] = c; s_putc(c); }</code></pre>
         return out;
       }).join("\n");
     }
-    document.querySelectorAll("code[data-lang]").forEach(el => {
-      el.innerHTML = highlight(el.innerHTML, el.dataset.lang);
-    });
+    document.querySelectorAll("code[data-lang]").forEach(el => { el.innerHTML = highlight(el.innerHTML, el.dataset.lang); });
   </script>
 </body>
 </html>
