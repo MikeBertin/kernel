@@ -6,7 +6,7 @@
 
 Click the screen, type `help`, then try `poke` and watch the CPU deny it.
 
-![KERNEL booting to a ring-3 shell](web/og.png)
+![KERNEL booting to a ring-3 shell, then running help / echo / poke / uptime](web/demo.gif)
 
 No Linux, no libraries, no framework underneath. A hand-written boot sector
 starts the machine in 16-bit real mode and climbs, one layer at a time, all the
