@@ -12,7 +12,7 @@
 [org 0x7C00]
 
 KERNEL_OFFSET   equ 0x10000     ; physical address we load the kernel to (64 KiB)
-KERNEL_SECTORS  equ 32          ; how many 512-byte sectors of kernel to read
+KERNEL_SECTORS  equ 48          ; how many 512-byte sectors of kernel to read
 
 boot_start:
     mov [BOOT_DRIVE], dl        ; BIOS leaves the boot drive number in DL — save it

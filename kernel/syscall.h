@@ -12,6 +12,7 @@
 #define SYS_READ   2   // -> eax = char (blocks)
 #define SYS_CLEAR  3
 #define SYS_UPTIME 4   // -> eax = seconds since boot
+#define SYS_REPORT 5   // print this process's private counter + its physical frame
 
 void syscall_init(void);   // register the int 0x80 handler
 

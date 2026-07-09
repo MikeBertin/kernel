@@ -8,6 +8,7 @@
 [bits 32]
 global context_switch
 global task_trampoline
+global user_task_trampoline
 
 ; void context_switch(uint32_t *save_old_esp, uint32_t new_esp)
 context_switch:
@@ -39,3 +40,24 @@ task_trampoline:
     cli
     hlt
     jmp .done
+
+; user_task_trampoline — where a brand-new *ring-3* task begins. context_switch
+; returns here with the user entry point and user stack pointer sitting on the
+; kernel stack (placed there by task_create_user). We build an iret frame and
+; drop to ring 3 — the scheduler has already set CR3 + tss.esp0 for this task.
+user_task_trampoline:
+    mov eax, [esp]         ; user entry point (eip)
+    mov ebx, [esp + 4]     ; user stack pointer (esp)
+
+    mov cx, 0x23           ; user data selector (0x20 | RPL 3)
+    mov ds, cx
+    mov es, cx
+    mov fs, cx
+    mov gs, cx
+
+    push 0x23              ; ss  = user data
+    push ebx               ; esp = user stack
+    push dword 0x202       ; eflags: IF=1 (bit 9) + reserved bit 1
+    push 0x1B              ; cs  = user code (0x18 | RPL 3)
+    push eax              ; eip = user entry
+    iret                   ; enter ring 3

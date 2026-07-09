@@ -1,9 +1,9 @@
 // kernel/kmain.c — the kernel's C entry point.
 //
 // The whole stack, bottom to top: protected mode (M1), interrupts (M2), memory
-// management (M3), multitasking (M4), and finally a userspace shell reached
-// only through system calls (M5). kmain brings each layer up, then lowers the
-// CPU into ring 3 and hands control to the shell.
+// management (M3), pre-emptive multitasking (M4), userspace + syscalls (M5),
+// real memory protection (M5.1), and now several *isolated* user processes
+// running at once (M5.2) — each in its own address space.
 #include "vga.h"
 #include "gdt.h"
 #include "idt.h"
@@ -15,8 +15,7 @@
 #include "syscall.h"
 #include "shell.h"
 #include "fault.h"
-
-extern void enter_usermode(uint32_t eip, uint32_t esp);
+#include "sched.h"
 
 static void ok(const char *label) {
     vga_set_color(VGA_LIGHT_GREEN, VGA_BLACK);
@@ -36,27 +35,31 @@ void kmain(void) {
     gdt_install();     // GDT with user segments + TSS (needed for ring 3)
     idt_install();     // IDT + PIC remap
     syscall_init();    // int 0x80 gate
-    fault_init();      // recoverable page-fault handler
+    fault_init();      // page-fault handler
     pit_init(100);
     keyboard_init();
     ok("cpu: GDT + TSS, IDT + PIC, syscalls, page-fault handler");
 
     pmm_init();
-    paging_init();     // kernel supervisor-only; just the shell's pages are user
+    paging_init();     // kernel supervisor-only; paging on
     heap_init();
     ok("memory: paging with ring-3 protection, kernel heap");
 
     __asm__ volatile ("sti");
-    ok("timer on IRQ0, keyboard on IRQ1, interrupts live");
+    ok("timer on IRQ0, interrupts live");
 
+    // M5.2: three ring-3 processes, each in its OWN address space.
     vga_set_color(VGA_YELLOW, VGA_BLACK);
-    vga_puts("\nDropping to ring 3 - the shell below is unprivileged.\n");
-    vga_puts("Try 'poke' to watch it get denied when it touches kernel memory:\n");
+    vga_puts("\nScheduler: 3 isolated user processes (each its own page directory).\n");
+    vga_puts("Same virtual address 0xB0000000 -> a different physical frame each:\n");
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
 
-    // Lower the CPU to ring 3 and jump into the shell. This never returns.
-    enter_usermode((uint32_t)user_shell,
-                   (uint32_t)(user_stack + sizeof(user_stack)));
+    sched_init();
+    task_create_user("worker", user_worker, 0);
+    task_create_user("worker", user_worker, 1);
+    task_create_user("worker", user_worker, 2);
+    sched_start();     // the timer now pre-empts between the three processes
 
-    for (;;) __asm__ volatile ("hlt");   // unreachable
+    // The idle task: sleep until the next interrupt. It's scheduled in turn too.
+    for (;;) __asm__ volatile ("hlt");
 }

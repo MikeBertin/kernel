@@ -14,7 +14,14 @@
 #define PAGE_USER    0x4
 
 void paging_init(void);                                    // identity-map + enable
-void map_page(uint32_t virt, uint32_t phys, uint32_t flags);
+void map_page(uint32_t virt, uint32_t phys, uint32_t flags);          // kernel dir
 uint32_t paging_translate(uint32_t virt);                  // virt -> phys (0 if unmapped)
+
+// Per-process address spaces (M5.2).
+uint32_t *paging_kernel_directory(void);
+uint32_t *paging_new_address_space(void);                  // clone kernel mappings
+void      map_page_in(uint32_t *pd, uint32_t virt, uint32_t phys, uint32_t flags);
+void      paging_switch(uint32_t *pd);                     // load CR3
+uint32_t  paging_translate_in(uint32_t *pd, uint32_t virt);
 
 #endif

@@ -93,3 +93,17 @@ void user_shell(void) {
     s_write("commands: help, echo <text>, uptime, clear, poke\n\n");
     shell_loop();
 }
+
+// A ring-3 worker program (M5.2). Several processes run this same code, but each
+// has its own address space: the counter lives at the same virtual address
+// (0xB0000004) in every process yet is backed by a different physical frame, so
+// they never interfere. It bumps its private counter, then asks the kernel to
+// report it (which also prints the physical frame — the proof of isolation).
+void user_worker(void) {
+    volatile uint32_t *counter = (volatile uint32_t *)0xB0000004;
+    for (;;) {
+        (*counter)++;
+        __asm__ volatile ("int $0x80" : : "a"(SYS_REPORT) : "memory");
+        for (volatile uint32_t i = 0; i < 500000; i++) { /* burn time */ }
+    }
+}

@@ -7,6 +7,12 @@
 #ifndef GDT_H
 #define GDT_H
 
+#include <stdint.h>
+
 void gdt_install(void);   // load the new GDT + TSS (kernel and user segments)
+
+// Set the ring-0 stack the CPU switches to on a trap from ring 3. The scheduler
+// updates this on every switch so each process traps onto its own kernel stack.
+void tss_set_kernel_stack(uint32_t esp0);
 
 #endif

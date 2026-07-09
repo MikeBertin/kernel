@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KERNEL — a from-scratch x86 OS you can boot in your browser</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<meta name="description" content="A complete x86 operating system written from scratch in C and assembly — boot sector to a ring-3 shell — booting live in your browser.">
+<meta name="description" content="A complete x86 operating system written from scratch in C and assembly — boot sector to isolated userspace processes — booting live in your browser.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="KERNEL — an x86 OS from scratch, booting in your browser">
-<meta property="og:description" content="Hand-written boot sector, protected mode, interrupts, virtual memory, multitasking, and a ring-3 shell with real memory protection. The same disk image runs in QEMU and live in the browser.">
+<meta property="og:description" content="Hand-written boot sector, protected mode, interrupts, virtual memory, pre-emptive multitasking, and isolated userspace processes each in their own address space. The same disk image runs in QEMU and live in the browser.">
 <meta property="og:url" content="https://mikebertin.github.io/kernel/">
 <meta property="og:image" content="https://mikebertin.github.io/kernel/og.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -80,7 +80,7 @@
 <body>
   <div class="wrap">
     <h1><span class="prompt">$</span> KERNEL</h1>
-    <p class="sub">A from-scratch x86 operating system — hand-written boot sector, protected mode, interrupts, virtual memory, pre-emptive multitasking, and a ring-3 shell. Booting live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image runs in QEMU. Click the screen and type a command.</p>
+    <p class="sub">A from-scratch x86 operating system — hand-written boot sector, protected mode, interrupts, virtual memory, pre-emptive multitasking, and isolated userspace processes. Booting live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image runs in QEMU.</p>
 
     <div class="crt">
       <div id="screen_container"><div></div><canvas></canvas></div>
@@ -89,8 +89,10 @@
       <button id="restart">↻ reboot</button>
       <span class="status" id="status"><span class="dot">●</span> booting…</span>
     </div>
-    <p class="hint">Click the screen and type — each keystroke is a hardware
-      interrupt handled by our own driver. The clock top-right ticks on the timer IRQ.</p>
+    <p class="hint">Three user processes run at once, pre-empted by the timer. Each
+      reads the <em>same</em> virtual address (0xB0000000) but it maps to a
+      <em>different</em> physical frame per process — proof they're truly isolated.
+      The clock top-right ticks on the timer IRQ.</p>
 
     <div class="divider"><h2>How it works — the actual code</h2><div class="rule"></div></div>
     <p class="lead">Every line below is really in the kernel booting above. Follow the machine coming up, from the first byte the BIOS runs to a working virtual-memory system.</p>
@@ -306,32 +308,52 @@ if (c >= 32 && c &lt; 127) { line[n++] = c; s_putc(c); }</code></pre>
     <div class="step">
       <header>
         <span class="tag">12 · protection</span>
-        <h3>What memory protection actually is</h3>
-        <p>Kernel pages are mapped supervisor-only; only the shell's own code and
-        stack carry the user bit. So when ring 3 reaches for kernel memory — try
-        the <em>poke</em> command above — the CPU page-faults. A real OS doesn't
-        die: it kills the offending process and carries on. With one process, we
-        "kill" it by rewriting the interrupt frame to restart the shell on a
-        fresh stack. That's a fault turned into a clean recovery.</p>
+        <h3>Catching a memory violation</h3>
+        <p>Kernel pages are mapped supervisor-only; only a process's own code and
+        data carry the user bit. If ring-3 code reaches for memory it doesn't own,
+        the CPU raises a <em>page fault</em> with the offending address in <em>CR2</em>.
+        The handler reads it, reports which process misbehaved, and stops — the
+        raw material a real OS uses to kill a process cleanly.</p>
       </header>
       <span class="file">kernel/fault.c</span>
       <pre><code data-lang="c">static void page_fault(registers_t *r) {
-    uint32_t cr2;                          // the address that faulted
+    uint32_t cr2;                              // the address that faulted
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
 
-    if ((r-&gt;cs &amp; 3) == 3) {                 // the fault came from ring 3
-        // report "denied access to &lt;cr2&gt;", then restart the shell:
-        r-&gt;eip     = (uint32_t)shell_loop;         // resume here...
-        r-&gt;useresp = (uint32_t)(user_stack + USER_STACK_SIZE);  // ...fresh stack
-        return;                            // iret returns to ring 3, recovered
+    if ((r-&gt;cs &amp; 3) == 3) {                     // the fault came from ring 3
+        // "user process N touched &lt;cr2&gt; ..." — a userspace access violation
     }
-    // a fault from ring 0 is a real kernel bug — halt.
+    // ...report cr2 / eip / error code, then halt.
+}</code></pre>
+    </div>
+
+    <!-- 13 -->
+    <div class="step">
+      <header>
+        <span class="tag">13 · isolation</span>
+        <h3>What a process really is</h3>
+        <p>Each process gets its <em>own</em> page directory — its own map from
+        virtual to physical memory. On every context switch the scheduler loads
+        that process's <em>CR3</em> (and its kernel stack via the TSS). That's why,
+        in the boot screen above, three processes read the identical virtual
+        address <em>0xB0000000</em> yet each sees a different physical frame: they
+        are genuinely separate address spaces and cannot touch each other's memory.</p>
+      </header>
+      <span class="file">kernel/sched.c</span>
+      <pre><code data-lang="c">void schedule(void) {                    // called from the timer IRQ
+    task_t *prev = current;
+    current = current-&gt;next;              // round-robin to the next process
+    if (prev == current) return;
+
+    tss_set_kernel_stack(current-&gt;kstack_top);  // where its ring-3 traps land
+    paging_switch(current-&gt;page_dir);           // its address space (load CR3)
+    context_switch(&amp;prev-&gt;esp, current-&gt;esp);   // its saved kernel context
 }</code></pre>
     </div>
 
     <footer>
-      A hand-written OS from the boot sector to a userspace shell with real
-      memory protection — booting live in your browser.<br>
+      A hand-written OS from the boot sector to isolated userspace processes,
+      each in its own address space — booting live in your browser.<br>
       Built by hand in C and x86 assembly. No Linux, no libraries underneath.<br>
       <a href="https://github.com/MikeBertin/kernel">Source on GitHub →</a>
     </footer>

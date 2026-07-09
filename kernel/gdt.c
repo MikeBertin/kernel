@@ -71,3 +71,7 @@ void gdt_install(void) {
     gdt_flush((uint32_t)&gdtp);
     tss_flush();
 }
+
+void tss_set_kernel_stack(uint32_t esp0) {
+    tss.esp0 = esp0;
+}
