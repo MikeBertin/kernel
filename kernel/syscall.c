@@ -45,7 +45,7 @@ static void sys_report(void) {
 
     uint8_t saved = vga_get_color();
     vga_set_color(VGA_LIGHT_CYAN, VGA_BLACK);
-    vga_puts_at((size_t)(12 + id), 2, line);
+    vga_puts_at((size_t)(9 + id), 2, line);
     vga_set_color_raw(saved);
 }
 
@@ -64,7 +64,7 @@ static void syscall_dispatch(registers_t *r) {
             r->eax = (uint8_t)keyboard_getchar();   // blocks until a key
             break;
         case SYS_CLEAR:
-            vga_init();
+            vga_clear_window();
             break;
         case SYS_UPTIME:
             r->eax = pit_ticks() / 100;             // 100 Hz timer

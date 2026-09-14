@@ -89,8 +89,8 @@ void shell_loop(void) {
 }
 
 void user_shell(void) {
-    s_write("\nKERNEL shell - you are in ring 3. Every action is a syscall.\n");
-    s_write("commands: help, echo <text>, uptime, clear, poke\n\n");
+    s_write("You are in ring 3: everything below is a system call.\n");
+    s_write("commands: help, echo <text>, uptime, clear, poke\n");
     shell_loop();
 }
 

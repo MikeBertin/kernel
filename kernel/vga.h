@@ -28,6 +28,8 @@ void vga_put_hex(uint32_t n);                 // 0x-prefixed hex at the cursor
 // status readouts like the uptime clock.
 void vga_puts_at(size_t row, size_t col, const char *s);
 void vga_set_cursor(size_t row, size_t col);   // move the streaming cursor
+void vga_set_window(size_t top, size_t bottom); // streaming output scrolls only within these rows
+void vga_clear_window(void);                  // clear the window, cursor to its top
 
 uint8_t vga_get_color(void);                  // current packed colour byte
 void    vga_set_color_raw(uint8_t packed);    // restore a packed colour byte

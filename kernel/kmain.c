@@ -2,8 +2,8 @@
 //
 // The whole stack, bottom to top: protected mode (M1), interrupts (M2), memory
 // management (M3), pre-emptive multitasking (M4), userspace + syscalls (M5),
-// real memory protection (M5.1), and now several *isolated* user processes
-// running at once (M5.2) — each in its own address space.
+// real memory protection (M5.1), several *isolated* user processes running at
+// once (M5.2), and an interactive ring-3 shell as one of them (M5.3).
 #include "vga.h"
 #include "gdt.h"
 #include "idt.h"
@@ -48,17 +48,24 @@ void kmain(void) {
     __asm__ volatile ("sti");
     ok("timer on IRQ0, interrupts live");
 
-    // M5.2: three ring-3 processes, each in its OWN address space.
+    // M5.2: three ring-3 worker processes, each in its OWN address space.
     vga_set_color(VGA_YELLOW, VGA_BLACK);
-    vga_puts("\nScheduler: 3 isolated user processes (each its own page directory).\n");
+    vga_puts("\nScheduler: 4 isolated user processes, each with its own page directory.\n");
     vga_puts("Same virtual address 0xB0000000 -> a different physical frame each:\n");
+
+    // M5.3: the fourth process is the shell. Its output scrolls in the bottom
+    // window (rows 14-24) while the workers keep reporting on rows 9-11.
+    vga_set_color(VGA_LIGHT_BLUE, VGA_BLACK);
+    vga_puts_at(13, 0, "-- process 3: a shell in ring 3. Type help, then try poke ---------------------");
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
+    vga_set_window(14, 24);
 
     sched_init();
     task_create_user("worker", user_worker, 0);
     task_create_user("worker", user_worker, 1);
     task_create_user("worker", user_worker, 2);
-    sched_start();     // the timer now pre-empts between the three processes
+    task_create_user("shell", user_shell, SHELL_PID);
+    sched_start();     // the timer now pre-empts between the four processes
 
     // The idle task: sleep until the next interrupt. It's scheduled in turn too.
     for (;;) __asm__ volatile ("hlt");

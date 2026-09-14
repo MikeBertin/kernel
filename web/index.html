@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KERNEL — a from-scratch x86 OS you can boot in your browser</title>
+<title>KERNEL: a from-scratch x86 OS you can boot in your browser</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<meta name="description" content="A complete x86 operating system written from scratch in C and assembly — boot sector to isolated userspace processes — booting live in your browser.">
+<meta name="description" content="A complete x86 operating system written from scratch in C and assembly, from boot sector to isolated userspace processes, booting live in your browser.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="KERNEL — an x86 OS from scratch, booting in your browser">
+<meta property="og:title" content="KERNEL: an x86 OS from scratch, booting in your browser">
 <meta property="og:description" content="Hand-written boot sector, protected mode, interrupts, virtual memory, pre-emptive multitasking, and isolated userspace processes each in their own address space. The same disk image runs in QEMU and live in the browser.">
 <meta property="og:url" content="https://mikebertin.github.io/kernel/">
 <meta property="og:image" content="https://mikebertin.github.io/kernel/og.png">
@@ -95,6 +95,27 @@
   .hint { color:var(--muted); font-size:12.5px; margin:14px 0 0; max-width:74ch; }
   .hint em { color:var(--accent); font-style:normal; }
 
+  /* ── "where this runs" pipeline ── */
+  .runs { margin:30px 0 0; border:1px solid var(--border); border-radius:10px;
+    background:linear-gradient(180deg,#0e1420,#0b0f17); padding:18px 20px 20px; }
+  .runs h4 { margin:0 0 3px; font-size:13px; color:#eef2f8; letter-spacing:.3px; }
+  .runs .lead { margin:0 0 16px; color:var(--muted); font-size:12.5px; max-width:78ch; }
+  .pipe { display:flex; align-items:stretch; gap:0; flex-wrap:wrap; }
+  .pipe .stage { flex:1 1 140px; min-width:130px; border:1px solid var(--border2); border-radius:8px;
+    background:var(--code-bg); padding:11px 13px; }
+  .pipe .stage .k { display:block; font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+  .pipe .stage .v { font-size:12.5px; color:var(--ink); line-height:1.45; }
+  .pipe .stage .v code { color:var(--blue); font-size:12px; }
+  .pipe .stage.out { border-color:var(--accent-dim); background:#0c130f; }
+  .pipe .stage.out .k { color:var(--accent); }
+  .pipe .arr { flex:0 0 26px; display:grid; place-items:center; color:var(--border2); font-size:15px; }
+  .pipe .fork { flex:1 1 100%; display:flex; gap:0; }
+  @media (max-width:640px) {
+    .pipe { flex-direction:column; }
+    .pipe .arr { transform:rotate(90deg); height:22px; }
+    .pipe .fork { flex-direction:column; }
+  }
+
   /* pinned mini terminal */
   #mini { position:fixed; right:22px; bottom:22px; z-index:55; width:312px;
     border:1px solid var(--border2); border-radius:8px; overflow:hidden; background:#000;
@@ -124,8 +145,10 @@
     border-radius:50%; background:var(--bg); border:2px solid var(--accent); box-shadow:0 0 10px -1px var(--accent); }
 
   .step { position:relative; margin:16px 0; border:1px solid var(--border);
-    border-radius:10px; overflow:hidden; background:linear-gradient(180deg,var(--panel),#0f131b);
+    border-radius:10px; background:linear-gradient(180deg,var(--panel),#0f131b);
     opacity:0; transform:translateY(16px); transition:opacity .5s, transform .5s, border-color .18s, box-shadow .18s; }
+  /* clip the code block (not the whole card) so tooltips can escape the card edge */
+  .step > header { border-radius:10px 10px 0 0; }
   .step.in { opacity:1; transform:none; }
   .step:hover { border-color:var(--border2); box-shadow:0 0 0 1px var(--accent-dim), 0 16px 40px -26px var(--accent); }
   .step::before { content:attr(data-n); position:absolute; left:-31px; top:16px; width:22px; height:22px;
@@ -139,13 +162,18 @@
   .term { color:var(--ink); font-style:normal; border-bottom:1px dotted var(--muted);
     cursor:help; position:relative; white-space:nowrap; }
   .term:hover { color:var(--accent); border-bottom-color:var(--accent); }
-  .term::after { content:attr(data-tip); position:absolute; left:50%; bottom:150%; transform:translateX(-50%) translateY(4px);
+  .term::after { content:attr(data-tip); position:absolute; left:50%; bottom:150%;
+    transform:translateX(calc(-50% + var(--tsx,0px))) translateY(4px);
     background:#0a0d13; color:var(--ink); border:1px solid var(--border2); border-radius:7px;
     padding:7px 10px; font-size:11.5px; line-height:1.45; white-space:normal; width:230px; text-align:left;
-    box-shadow:0 12px 30px -12px #000; opacity:0; pointer-events:none; transition:.16s; z-index:20; font-style:normal; }
-  .term:hover::after { opacity:1; transform:translateX(-50%) translateY(0); }
+    box-shadow:0 12px 30px -12px #000; opacity:0; pointer-events:none; transition:opacity .16s, transform .16s; z-index:20; font-style:normal; }
+  .term:hover::after { opacity:1; transform:translateX(calc(-50% + var(--tsx,0px))) translateY(0); }
+  /* flip below the word when there isn't room above (near the top of the viewport) */
+  .term.tip-below::after { bottom:auto; top:150%; transform:translateX(calc(-50% + var(--tsx,0px))) translateY(-4px); }
+  .term.tip-below:hover::after { transform:translateX(calc(-50% + var(--tsx,0px))) translateY(0); }
 
-  .code-wrap { position:relative; border-top:1px solid var(--border); }
+  .code-wrap { position:relative; border-top:1px solid var(--border);
+    border-radius:0 0 10px 10px; overflow:hidden; }
   .code-wrap .file { display:block; font-size:11.5px; color:var(--muted); padding:8px 16px 0; background:var(--code-bg); }
   .copy { position:absolute; top:7px; right:9px; padding:3px 9px; font-size:10.5px;
     opacity:0; transition:.16s; background:#131926; }
@@ -219,7 +247,7 @@
     <main>
       <section class="hero">
         <h1>A hand-written x86 operating system,<br><span class="g">booting in your browser.</span></h1>
-        <p class="sub">Boot sector to isolated userspace processes — every layer in C and x86 assembly, no Linux and no libraries underneath. It runs live below via <a href="https://github.com/copy/v86">v86</a>; the exact same disk image boots in QEMU.</p>
+        <p class="sub">Boot sector to isolated userspace processes: every layer in C and x86 assembly, no Linux and no libraries underneath. It runs live below via <a href="https://github.com/copy/v86">v86</a>, an x86 PC emulated in WebAssembly right in this tab; the exact same disk image boots in <span class="term" data-tip="A full-system machine emulator. On a real desktop, `make run` boots this very same disk image in a QEMU window.">QEMU</span> on a desktop.</p>
 
         <div class="crt">
           <div class="crt-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>kernel · 32-bit x86 · v86</span></div>
@@ -227,14 +255,49 @@
             <div id="screen_container"><div></div><canvas></canvas></div>
           </div>
         </div>
-        <p class="hint">Three user processes run at once, pre-empted by the timer. Each reads the
+        <p class="hint">Three worker processes run at once, pre-empted by the timer. Each reads the
           <em>same</em> virtual address (0xB0000000) but it maps to a <em>different</em> physical
-          frame per process — proof they're truly isolated. The clock top-right ticks on the timer IRQ.</p>
+          frame per process: proof they're truly isolated. Below them, a fourth process is a shell. Click the screen and type <em>help</em>, then try <em>poke</em> to watch the CPU stop it writing to kernel memory. The clock top-right ticks on the timer <span class="term" data-tip="Interrupt Request: a hardware line a device pulls to interrupt the CPU and demand attention. The timer chip raises one on every tick.">IRQ</span>.</p>
       </section>
 
+      <div class="runs">
+        <h4>Where this code actually runs</h4>
+        <p class="lead">There's no operating system underneath it: this <em>is</em> the operating system. The
+          source is compiled and stitched into one raw disk image, and that single image is what boots,
+          whether on a real desktop or right here in your browser. Same bytes, both places.</p>
+        <div class="pipe">
+          <div class="stage">
+            <span class="k">1 · source</span>
+            <div class="v"><code>kernel/*.c</code> + <span class="term" data-tip="NASM assembly. The boot sector and the low-level stubs (context switch, interrupt entry, ring-3 entry) are hand-written x86 assembly."><code>*.asm</code></span>, hand-written C and x86 assembly, no libraries.</div>
+          </div>
+          <div class="arr">→</div>
+          <div class="stage">
+            <span class="k">2 · build</span>
+            <div class="v"><code>make</code>: a <span class="term" data-tip="A cross-compiler (i686-elf-gcc) targets bare x86 with no OS assumptions: no standard library and no syscalls to a host. Paired with the NASM assembler and a linker script that fixes where each piece lands in memory.">cross-compiler</span> + <span class="term" data-tip="Netwide Assembler, the assembler that turns the hand-written .asm files into raw x86 machine code.">NASM</span> + a linker script flatten it all to raw machine code.</div>
+          </div>
+          <div class="arr">→</div>
+          <div class="stage out">
+            <span class="k">3 · disk image</span>
+            <div class="v"><code>os-image.bin</code>:  <span class="term" data-tip="One flat file: the 512-byte boot sector at sector 0, the kernel from sector 1 on, padded to 1 MiB so the disk geometry is valid. This exact file is served to the emulator above.">boot sector + kernel</span>, one 1 MiB file.</div>
+          </div>
+          <div class="arr">→</div>
+          <div class="fork">
+            <div class="stage">
+              <span class="k">on a desktop</span>
+              <div class="v"><code>make run</code> boots it in <span class="term" data-tip="A full-system emulator running as a normal desktop program. Feed it the image with -drive and it POSTs and boots exactly like real hardware.">QEMU</span>.</div>
+            </div>
+            <div class="arr">＝</div>
+            <div class="stage">
+              <span class="k">in this tab</span>
+              <div class="v"><span class="term" data-tip="v86 emulates a whole x86 PC in WebAssembly. The page hands it the identical os-image.bin. Nothing is precompiled or faked; the kernel really boots in your browser.">v86</span> boots the identical image, live above.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="wt-head">
-        <h2>How it works — the actual code</h2>
-        <p>Every snippet below is really in the kernel booting above. Follow the machine come up, from the first byte the BIOS runs all the way to isolated processes.</p>
+        <h2>How it works: the actual code</h2>
+        <p>Every snippet below is really in the kernel booting above. Follow the machine come up, from the first byte the <span class="term" data-tip="Basic Input/Output System: firmware baked into the machine that runs first at power-on, sets up basic hardware, then loads the boot sector off disk and jumps to it.">BIOS</span> runs all the way to isolated processes.</p>
       </div>
 
       <div class="timeline" id="timeline">
@@ -245,7 +308,7 @@
           <header>
             <span class="tag">01 · boot</span>
             <h3>512 bytes and a magic number</h3>
-            <p>The BIOS loads the first disk sector to <span class="term" data-tip="Physical address 0x7C00 — the fixed spot the BIOS copies the boot sector to and jumps to.">0x7C00</span> and jumps there in 16-bit real mode — but only if the sector ends in the signature <span class="term" data-tip="The 2-byte boot signature 0x55 0xAA. No signature, no boot.">0x55 0xAA</span>. That tiny stub is all we get to bootstrap everything else.</p>
+            <p>The <span class="term" data-tip="Basic Input/Output System, the machine's power-on firmware. It runs before any OS exists, and its last job is to load this 512-byte sector and jump to it.">BIOS</span> loads the first disk sector to <span class="term" data-tip="Physical address 0x7C00, the fixed spot the BIOS copies the boot sector to and jumps to.">0x7C00</span> and jumps there in 16-bit <span class="term" data-tip="Real mode is the primitive 8086-compatible state the CPU powers on in: 16-bit, about 1 MiB of memory and no protection. Everything starts here.">real mode</span>, but only if the sector ends in the signature <span class="term" data-tip="The 2-byte boot signature 0x55 0xAA. No signature, no boot.">0x55 0xAA</span>. That tiny stub is all we get to bootstrap everything else.</p>
           </header>
           <div class="code-wrap"><span class="file">boot/boot.asm</span>
           <pre><code data-lang="asm">[bits 16]
@@ -255,7 +318,7 @@
     int 0x10
     call load_kernel   ; read the C kernel off the disk into memory
     call enable_a20    ; unlock addressing above 1 MiB
-    call switch_to_pm  ; leave real mode behind — never returns
+    call switch_to_pm  ; leave real mode behind; never returns
 
 times 510 - ($ - $$) db 0   ; pad to 510 bytes...
 dw 0xAA55                    ; ...then the signature the BIOS checks for</code></pre></div>
@@ -265,14 +328,14 @@ dw 0xAA55                    ; ...then the signature the BIOS checks for</code><
           <header>
             <span class="tag">02 · protected mode</span>
             <h3>Escaping real mode by hand</h3>
-            <p>We load a <span class="term" data-tip="Global Descriptor Table — a flat layout where code + data segments each span the whole 4 GiB, so segmentation gets out of the way.">flat GDT</span>, set the protection-enable bit, then <em>far-jump</em> — which is what actually reloads <span class="term" data-tip="CR0.PE: the protection-enable bit. Setting it turns on 32-bit protected mode.">CS</span> and drops the CPU into 32-bit protected mode.</p>
+            <p>We load a <span class="term" data-tip="Global Descriptor Table: a flat layout where code + data segments each span the whole 4 GiB, so segmentation gets out of the way.">flat GDT</span>, set the <span class="term" data-tip="CR0.PE, the protection-enable bit in control register 0. Setting it turns on 32-bit protected mode.">protection-enable bit</span>, then <em>far-jump</em>, which is what actually reloads <span class="term" data-tip="Code Segment register: it holds which code segment the CPU is executing from. Only a far-jump reloads it, which is what makes the mode switch take effect.">CS</span> and drops the CPU into 32-bit protected mode.</p>
           </header>
           <div class="code-wrap"><span class="file">boot/boot.asm</span>
           <pre><code data-lang="asm">switch_to_pm:
     cli
     lgdt [gdt_descriptor]   ; describe our flat segment layout to the CPU
     mov eax, cr0
-    or  eax, 0x1            ; CR0.PE = 1 — turn on protected mode
+    or  eax, 0x1            ; CR0.PE = 1: turn on protected mode
     mov cr0, eax
     jmp CODE_SEG:init_pm    ; far jump flushes the pipeline, loads a 32-bit CS</code></pre></div>
         </div>
@@ -281,7 +344,7 @@ dw 0xAA55                    ; ...then the signature the BIOS checks for</code><
           <header>
             <span class="tag">03 · output</span>
             <h3>The screen is just memory</h3>
-            <p>No driver stack, no BIOS call. VGA text mode is memory-mapped at <span class="term" data-tip="0xB8000 — the VGA text buffer. 80×25 cells, two bytes each: a character and a colour attribute.">0xB8000</span>: each cell is a character byte plus a colour attribute byte. Write a 16-bit word and a character appears.</p>
+            <p>No driver stack, no BIOS call. <span class="term" data-tip="In VGA text mode the video hardware exposes an 80×25 grid of character cells directly as memory. No graphics driver: you write bytes, characters appear.">VGA text mode</span> is memory-mapped at <span class="term" data-tip="0xB8000, the VGA text buffer. 80×25 cells, two bytes each: a character and a colour attribute.">0xB8000</span>: each cell is a character byte plus a colour attribute byte. Write a 16-bit word and a character appears.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/vga.c</span>
           <pre><code data-lang="c">#define VGA_MEMORY ((volatile uint16_t *)0xB8000)
@@ -299,7 +362,7 @@ VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre></div>
           <header>
             <span class="tag">04 · interrupts</span>
             <h3>A jump table for the CPU</h3>
-            <p>The <span class="term" data-tip="Interrupt Descriptor Table — 256 gates telling the CPU which handler to run for each interrupt vector.">IDT</span> tells the CPU where to go when interrupt <em>N</em> fires. Each gate stores a handler address split across two halves; <em>0x8E</em> marks it a present, ring-0, 32-bit interrupt gate.</p>
+            <p>The <span class="term" data-tip="Interrupt Descriptor Table: 256 gates telling the CPU which handler to run for each interrupt vector.">IDT</span> tells the CPU where to go when interrupt <em>N</em> fires. Each gate stores a handler address split across two halves; <em>0x8E</em> marks it a present, ring-0, 32-bit interrupt gate.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/idt.c</span>
           <pre><code data-lang="c">void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
@@ -314,7 +377,7 @@ VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre></div>
           <header>
             <span class="tag">05 · interrupts</span>
             <h3>Defusing a legacy landmine</h3>
-            <p>The 8259 <span class="term" data-tip="Programmable Interrupt Controller. Its default IRQ vectors overlap the CPU's exception vectors, so we remap them to 32–47.">PIC</span> delivers hardware IRQs on vectors that, by default, collide with the CPU's own exception vectors — a timer tick would look like a double fault. We remap it so IRQs land safely on vectors 32–47.</p>
+            <p>The 8259 <span class="term" data-tip="Programmable Interrupt Controller. Its default IRQ vectors overlap the CPU's exception vectors, so we remap them to 32–47.">PIC</span> delivers hardware <span class="term" data-tip="Interrupt Requests: the numbered lines devices (timer, keyboard) use to interrupt the CPU. Each arrives as a vector the CPU looks up in the IDT.">IRQs</span> on vectors that, by default, collide with the CPU's own exception vectors, so a timer tick would look like a double fault. We remap it so IRQs land safely on vectors 32–47.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/isr.c</span>
           <pre><code data-lang="c">void pic_remap(void) {
@@ -330,7 +393,7 @@ VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre></div>
           <header>
             <span class="tag">06 · keyboard</span>
             <h3>Every keystroke is an interrupt</h3>
-            <p>Press a key and the controller raises <span class="term" data-tip="IRQ1 — the keyboard's interrupt line. It fires on every key press and release.">IRQ1</span>. Our handler reads the raw scancode from port <em>0x60</em>, ignores key-release codes, translates to ASCII, and buffers it for a reader.</p>
+            <p>Press a key and the controller raises <span class="term" data-tip="IRQ1 is the keyboard's interrupt line. It fires on every key press and release.">IRQ1</span>. Our handler reads the raw <span class="term" data-tip="Scancode: the numeric code the keyboard controller emits per key event, not ASCII. Separate codes for press and release; the top bit marks a release.">scancode</span> from port <em>0x60</em>, ignores key-release codes, translates to <span class="term" data-tip="The standard numeric encoding for text characters: the byte value 65 means 'A'. The keyboard speaks scancodes, so we translate.">ASCII</span> and buffers it for a reader.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/keyboard.c</span>
           <pre><code data-lang="c">static void keyboard_callback(registers_t *r) {
@@ -347,7 +410,7 @@ VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre></div>
           <header>
             <span class="tag">07 · physical memory</span>
             <h3>Handing out RAM, one frame at a time</h3>
-            <p>Physical memory is carved into 4 KiB <em>frames</em>, one bit each in a bitmap: 1 used, 0 free. Everything above — page tables, the heap — ultimately draws its memory from here.</p>
+            <p>Physical memory is carved into 4 KiB <span class="term" data-tip="A frame (or page frame) is one 4 KiB chunk of physical RAM, the fixed unit the allocator hands out and paging maps.">frames</span>, one bit each in a <span class="term" data-tip="Bitmap: one bit per frame across all of RAM, tracking used vs free. Tiny and cache-friendly; allocating is just finding a 0.">bitmap</span>: 1 used, 0 free. Everything above (page tables, the heap) ultimately draws its memory from here.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/pmm.c</span>
           <pre><code data-lang="c">uint32_t pmm_alloc_frame(void) {
@@ -365,7 +428,7 @@ VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre></div>
           <header>
             <span class="tag">08 · virtual memory</span>
             <h3>Turning on the illusion</h3>
-            <p><em>map_page</em> points a virtual page at a physical frame through the two-level page tables; <em>invlpg</em> drops the stale cached translation. Then we load <span class="term" data-tip="CR3 holds the physical address of the active page directory — the root of the current address space.">CR3</span> and set <span class="term" data-tip="CR0.PG — the paging-enable bit. From the next instruction, every address is virtual.">CR0.PG</span>, and every address the CPU touches becomes virtual.</p>
+            <p><em>map_page</em> points a virtual page at a physical frame through the two-level page tables; <em>invlpg</em> drops the stale cached translation. Then we load <span class="term" data-tip="CR3 holds the physical address of the active page directory, the root of the current address space.">CR3</span> and set <span class="term" data-tip="CR0.PG, the paging-enable bit. From the next instruction, every address is virtual.">CR0.PG</span>, and every address the CPU touches becomes virtual.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/paging.c</span>
           <pre><code data-lang="c">void map_page(uint32_t virt, uint32_t phys, uint32_t flags) {
@@ -376,7 +439,7 @@ VGA_MEMORY[row * 80 + col] = vga_entry(c, color);</code></pre></div>
 }
 
 asm("mov %0, %%cr3" :: "r"(page_directory));   // point the MMU at our tables
-cr0 |= 0x80000000;                             // CR0.PG — paging is now on
+cr0 |= 0x80000000;                             // CR0.PG: paging is now on
 asm("mov %0, %%cr0" :: "r"(cr0));</code></pre></div>
         </div>
 
@@ -384,7 +447,7 @@ asm("mov %0, %%cr0" :: "r"(cr0));</code></pre></div>
           <header>
             <span class="tag">09 · heap</span>
             <h3>kmalloc, from nothing</h3>
-            <p>A first-fit walk over a linked list of blocks: find a free one big enough, split off the surplus, hand back the payload. <em>kfree</em> marks it free and coalesces with its neighbour so the heap doesn't fragment into confetti.</p>
+            <p>A <span class="term" data-tip="First-fit: walk the block list and take the first free block big enough, rather than hunting for the best-sized one. Simple, and plenty for a kernel heap.">first-fit</span> walk over a linked list of blocks: find a free one big enough, split off the surplus, hand back the payload. <em>kfree</em> marks it free and <span class="term" data-tip="Coalesce: merge a newly-freed block with an adjacent free block, so repeated alloc/free doesn't shatter the heap into unusable slivers (fragmentation).">coalesces</span> with its neighbour so the heap doesn't fragment into confetti.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/heap.c</span>
           <pre><code data-lang="c">void *kmalloc(size_t size) {
@@ -405,7 +468,7 @@ asm("mov %0, %%cr0" :: "r"(cr0));</code></pre></div>
           <header>
             <span class="tag">10 · multitasking</span>
             <h3>What a context switch actually is</h3>
-            <p>Startlingly small. Save the outgoing task's registers, stash its stack pointer, load the next task's, restore its registers — the final <em>ret</em> resumes it exactly where it left off. Driven by the timer IRQ, this is pre-emptive multitasking.</p>
+            <p>Startlingly small. Save the outgoing task's registers, stash its stack pointer, load the next task's, restore its registers. The final <em>ret</em> resumes it exactly where it left off. Driven by the timer IRQ, this is pre-emptive multitasking.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/switch.asm</span>
           <pre><code data-lang="asm">context_switch:            ; (uint32_t *save_old_esp, uint32_t new_esp)
@@ -430,10 +493,10 @@ asm("mov %0, %%cr0" :: "r"(cr0));</code></pre></div>
           <header>
             <span class="tag">11 · userspace</span>
             <h3>The one guarded doorway</h3>
-            <p>User programs run in <span class="term" data-tip="Ring 3 — the CPU's least-privileged level. No hardware access, no kernel memory; syscalls only.">ring 3</span> — unprivileged. Their only channel into the kernel is <span class="term" data-tip="int 0x80 — a software interrupt gate we deliberately made callable from ring 3. This is a system call.">int 0x80</span>, a gate that traps into the kernel, which does the privileged work and hands back a result. That trap boundary is what a system call actually is.</p>
+            <p>User programs run in <span class="term" data-tip="Ring 3 is the CPU's least-privileged level. No hardware access, no kernel memory; syscalls only.">ring 3</span>, unprivileged. Their only channel into the kernel is <span class="term" data-tip="int 0x80: a software interrupt gate we deliberately made callable from ring 3. This is a system call.">int 0x80</span>, a gate that traps into the kernel, which does the privileged work and hands back a result. That trap boundary is what a system call actually is.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/shell.c</span>
-          <pre><code data-lang="c">// running in ring 3 — the ONLY way to reach the kernel
+          <pre><code data-lang="c">// running in ring 3: the ONLY way to reach the kernel
 static char s_read(void) {
     uint32_t c;
     asm volatile("int $0x80" : "=a"(c) : "a"(SYS_READ) : "memory");
@@ -465,24 +528,27 @@ static char s_read(void) {
               <text x="540" y="118" text-anchor="middle" class="dgm-txt" fill="#6b7686">syscall</text>
             </g>
           </svg>
-          <p class="cap">Ring 3 can't touch hardware or kernel memory — the only way in is the syscall gate.</p>
+          <p class="cap">Ring 3 can't touch hardware or kernel memory; the only way in is the syscall gate.</p>
         </div>
 
         <div class="step" id="s12" data-n="12" data-phase="user">
           <header>
             <span class="tag">12 · protection</span>
             <h3>Catching a memory violation</h3>
-            <p>Kernel pages are mapped supervisor-only; only a process's own code and data carry the user bit. If ring-3 code reaches for memory it doesn't own, the CPU raises a <em>page fault</em> with the offending address in <span class="term" data-tip="CR2 holds the faulting linear address after a page fault — the exact address the code tried to touch.">CR2</span>. The handler reads it, reports which process misbehaved, and stops.</p>
+            <p>Kernel pages are mapped supervisor-only; only a process's own code and data carry the user bit. If ring-3 code reaches for memory it doesn't own, the CPU raises a <em>page fault</em> with the offending address in <span class="term" data-tip="CR2 holds the faulting linear address after a page fault: the exact address the code tried to touch.">CR2</span>. The handler reads it and reports which process misbehaved. If it was the shell, the kernel restarts the shell on a fresh stack and the other processes never notice.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/fault.c</span>
           <pre><code data-lang="c">static void page_fault(registers_t *r) {
     uint32_t cr2;                              // the address that faulted
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
 
-    if ((r-&gt;cs &amp; 3) == 3) {                     // the fault came from ring 3
-        // "user process N touched &lt;cr2&gt; ..." — a userspace access violation
+    if ((r-&gt;cs &amp; 3) == 3 &amp;&amp; sched_current_id() == SHELL_PID) {
+        vga_puts("[page fault] the CPU blocked process 3 at ");
+        r-&gt;eip = (uint32_t)shell_loop;        // resume the shell's command loop
+        r-&gt;useresp = USER_STACK_TOP;          // on a fresh user stack
+        return;                                // iret straight back to ring 3
     }
-    // ...report cr2 / eip / error code, then halt.
+    // any other fault: report cr2 / eip / error code, then halt.
 }</code></pre></div>
         </div>
 
@@ -490,7 +556,7 @@ static char s_read(void) {
           <header>
             <span class="tag">13 · isolation</span>
             <h3>What a process really is</h3>
-            <p>Each process gets its <em>own</em> page directory — its own map from virtual to physical memory. On every context switch the scheduler loads that process's <span class="term" data-tip="CR3 selects the active page directory. Swapping it swaps the entire virtual→physical mapping — the whole address space.">CR3</span> (and its kernel stack via the TSS). That's why the three processes above read the identical virtual address <em>0xB0000000</em> yet each sees a different physical frame.</p>
+            <p>Each process gets its <em>own</em> page directory: its own map from virtual to physical memory. On every context switch the scheduler loads that process's <span class="term" data-tip="CR3 selects the active page directory. Swapping it swaps the entire virtual→physical mapping: the whole address space.">CR3</span> (and its kernel stack via the <span class="term" data-tip="Task State Segment: a CPU structure holding the kernel stack pointer. When a ring-3 trap enters ring 0, the CPU reads esp0 from here to know which stack to switch to.">TSS</span>). That's why the three worker processes above read the identical virtual address <em>0xB0000000</em> yet each sees a different physical frame.</p>
           </header>
           <div class="code-wrap"><span class="file">kernel/sched.c</span>
           <pre><code data-lang="c">void schedule(void) {                    // called from the timer IRQ
@@ -535,14 +601,14 @@ static char s_read(void) {
               <text x="545" y="168" text-anchor="middle" class="dgm-txt" fill="#e3b341">phys 0x7E000</text>
             </g>
           </svg>
-          <p class="cap">Hover a process to trace its mapping — three separate address spaces, one CR3 each.</p>
+          <p class="cap">Hover a process to trace its mapping: three separate address spaces, one CR3 each.</p>
         </div>
 
       </div>
 
       <footer>
         A hand-written OS from the boot sector to isolated userspace processes, each in its own
-        address space — booting live in your browser.<br>
+        address space, booting live in your browser.<br>
         Built by hand in C and x86 assembly. No Linux, no libraries underneath.
         &nbsp;·&nbsp; <a href="https://github.com/MikeBertin/kernel">Source on GitHub →</a>
       </footer>
@@ -609,6 +675,26 @@ static char s_read(void) {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); reveal.unobserve(e.target); } });
     }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
     document.querySelectorAll(".step, .diagram").forEach(el => reveal.observe(el));
+
+    // ── tooltip positioner: flip below near the top, keep it inside its card ──
+    const TIP_W = 252; // 230 content + padding + border
+    document.querySelectorAll(".term").forEach(t => {
+      t.addEventListener("pointerenter", () => {
+        const r = t.getBoundingClientRect();
+        // the tooltip sits above by default; flip below if it would clip the top
+        t.classList.toggle("tip-below", r.top < 160);
+        // clamp horizontally to the card, so it never spills into the sidebar
+        const host = t.closest(".step, .runs, .hero") || document.querySelector("main");
+        const hb = host.getBoundingClientRect();
+        let lo = hb.left + 6, hi = hb.right - 6;
+        if (hi - lo < TIP_W) { lo = 8; hi = innerWidth - 8; } // card narrower than the tip: use the viewport
+        const mid = r.left + r.width / 2;
+        let shift = 0;
+        if (mid - TIP_W / 2 < lo) shift = lo - (mid - TIP_W / 2);
+        else if (mid + TIP_W / 2 > hi) shift = hi - (mid + TIP_W / 2);
+        t.style.setProperty("--tsx", Math.round(shift) + "px");
+      });
+    });
 
     // ── scroll progress bar ──
     const prog = document.getElementById("progress");

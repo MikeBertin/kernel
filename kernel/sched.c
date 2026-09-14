@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #define KSTACK_SIZE  8192
-#define USTACK_TOP   0xC0000000u   // top of each process's private user stack
+#define USTACK_TOP   USER_STACK_TOP
 #define USTACK_PAGES 4
 #define UDATA_VA     0xB0000000u   // each process's private data page: [id, counter]
 

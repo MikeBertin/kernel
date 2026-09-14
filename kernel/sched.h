@@ -10,6 +10,8 @@
 
 typedef void (*task_entry_t)(void);
 
+#define USER_STACK_TOP 0xC0000000u   // top of every process's private user stack
+
 void sched_init(void);                                  // create the idle task
 void task_create(const char *name, task_entry_t entry); // ring-0 task (M4)
 void task_create_user(const char *name, task_entry_t entry, int id); // ring-3 process (M5.2)

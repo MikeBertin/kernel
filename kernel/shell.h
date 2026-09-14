@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define USER_STACK_SIZE 16384
+#define SHELL_PID       3        // the shell runs as the fourth process
 
 void user_shell(void);   // ring-3 entry: banner, then the command loop
 void shell_loop(void);   // the command loop alone (re-entered after a fault)
