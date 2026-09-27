@@ -1,4 +1,4 @@
-// kernel/pit.c — timer driver.
+// kernel/pit.c: timer driver.
 #include "pit.h"
 #include "isr.h"
 #include "io.h"
@@ -15,7 +15,7 @@ static void (*tick_hook)(void);
 uint32_t pit_ticks(void) { return ticks; }
 void pit_set_tick_hook(void (*fn)(void)) { tick_hook = fn; }
 
-// Tiny unsigned-to-decimal — no libc here.
+// Tiny unsigned-to-decimal; no libc here.
 static void utoa(uint32_t v, char *buf) {
     char tmp[11];
     int i = 0;

@@ -1,8 +1,8 @@
-// kernel/sched.h — a round-robin pre-emptive scheduler.
+// kernel/sched.h: a round-robin pre-emptive scheduler.
 //
 // Tasks are just a saved stack pointer and a link to the next task, arranged in
-// a ring. On every timer tick the running task is frozen and the next one runs
-// — pre-emptive multitasking, no cooperation required from the tasks.
+// a ring. On every timer tick the running task is frozen and the next one runs.
+// Pre-emptive multitasking, no cooperation required from the tasks.
 #ifndef SCHED_H
 #define SCHED_H
 

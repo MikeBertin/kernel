@@ -1,4 +1,4 @@
-// kernel/pmm.h — physical memory manager (frame allocator).
+// kernel/pmm.h: physical memory manager (frame allocator).
 //
 // Physical RAM is handed out in 4 KiB "frames". A bitmap tracks which frames
 // are free. This is the bedrock every higher allocator sits on: page tables

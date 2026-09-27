@@ -1,4 +1,4 @@
-// kernel/syscall.c — dispatch int 0x80 to kernel services.
+// kernel/syscall.c: dispatch int 0x80 to kernel services.
 #include "syscall.h"
 #include "isr.h"
 #include "vga.h"
@@ -26,7 +26,7 @@ static char *put_hex(char *p, uint32_t v) {
 
 // A process asks the kernel to report its private counter. We read it from the
 // process's own data page (mapped in the currently-active address space) and
-// translate that virtual address to physical — printing both proves that each
+// translate that virtual address to physical. Printing both proves that each
 // process's identical virtual address is backed by a *different* frame.
 static void sys_report(void) {
     int id = sched_current_id();

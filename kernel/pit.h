@@ -1,7 +1,7 @@
-// kernel/pit.h — the Programmable Interval Timer (Intel 8253/8254).
+// kernel/pit.h: the Programmable Interval Timer (Intel 8253/8254).
 //
-// The PIT fires IRQ0 at a fixed frequency, giving the kernel a steady heartbeat
-// — the basis for uptime and, later, pre-emptive scheduling.
+// The PIT fires IRQ0 at a fixed frequency, giving the kernel a steady heartbeat:
+// the basis for uptime and, later, pre-emptive scheduling.
 #ifndef PIT_H
 #define PIT_H
 

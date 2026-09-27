@@ -1,4 +1,4 @@
-; kernel/entry.asm — 32-bit kernel entry stub
+; kernel/entry.asm: 32-bit kernel entry stub
 ;
 ; The boot sector far-jumps to physical 0x10000 with a flat GDT loaded and a
 ; stack ready. The linker puts _start at exactly 0x10000, so this runs first.

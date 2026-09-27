@@ -1,4 +1,4 @@
-// kernel/idt.h — the Interrupt Descriptor Table.
+// kernel/idt.h: the Interrupt Descriptor Table.
 //
 // The IDT is the CPU's jump table for interrupts: 256 entries, one per vector.
 // When interrupt N fires, the CPU looks up entry N and transfers control to the

@@ -1,4 +1,4 @@
-// kernel/isr.h — interrupt service routines and dispatch.
+// kernel/isr.h: interrupt service routines and dispatch.
 #ifndef ISR_H
 #define ISR_H
 

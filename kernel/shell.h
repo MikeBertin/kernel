@@ -1,4 +1,4 @@
-// kernel/shell.h — a tiny interactive shell that runs in ring 3.
+// kernel/shell.h: a tiny interactive shell that runs in ring 3.
 #ifndef SHELL_H
 #define SHELL_H
 

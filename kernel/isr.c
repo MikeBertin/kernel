@@ -1,4 +1,4 @@
-// kernel/isr.c — the C side of interrupt handling.
+// kernel/isr.c: the C side of interrupt handling.
 //
 // The asm stubs all funnel into isr_handler (exceptions) or irq_handler
 // (hardware interrupts), passing a pointer to the saved register frame.
@@ -32,7 +32,7 @@ void pic_remap(void) {
     outb(PIC2_DATA, 0x02); io_wait();  // ICW3: slave cascade identity
     outb(PIC1_DATA, 0x01); io_wait();  // ICW4: 8086 mode
     outb(PIC2_DATA, 0x01); io_wait();
-    outb(PIC1_DATA, 0x00);             // clear all masks — enable every IRQ line
+    outb(PIC1_DATA, 0x00);             // clear all masks: enable every IRQ line
     outb(PIC2_DATA, 0x00);
 }
 

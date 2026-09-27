@@ -1,4 +1,4 @@
-// kernel/keyboard.h — PS/2 keyboard driver.
+// kernel/keyboard.h: PS/2 keyboard driver.
 //
 // The keyboard controller raises IRQ1 whenever a key changes state and puts a
 // "scancode" in port 0x60. We translate press scancodes to ASCII and echo them.

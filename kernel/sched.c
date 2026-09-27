@@ -1,4 +1,4 @@
-// kernel/sched.c — round-robin scheduler with isolated userspace processes.
+// kernel/sched.c: round-robin scheduler with isolated userspace processes.
 #include "sched.h"
 #include "heap.h"
 #include "pit.h"

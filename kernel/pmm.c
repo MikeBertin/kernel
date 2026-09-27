@@ -1,4 +1,4 @@
-// kernel/pmm.c — bitmap physical frame allocator.
+// kernel/pmm.c: bitmap physical frame allocator.
 #include "pmm.h"
 
 // We manage the first 32 MiB of RAM (matches the memory we hand QEMU/v86).

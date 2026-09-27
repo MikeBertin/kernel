@@ -1,8 +1,8 @@
-; kernel/interrupts.asm — the low-level interrupt entry points.
+; kernel/interrupts.asm: the low-level interrupt entry points.
 ;
 ; The CPU can't call a C function directly on an interrupt: it just pushes a
 ; minimal frame and jumps to the address in the IDT. These stubs finish building
-; a uniform register frame, switch to kernel data segments, and call into C.
+; a uniform register frame, switch to kernel data segments and call into C.
 ;
 ; Some CPU exceptions push an error code, others don't. To give every handler an
 ; identical stack layout we push a dummy 0 for the ones that don't.
@@ -87,7 +87,7 @@ IRQ 13, 45
 IRQ 14, 46
 IRQ 15, 47
 
-; --- the syscall vector (int 0x80) — reuses the exception common path ---
+; --- the syscall vector (int 0x80); reuses the exception common path ---
 ISR_NOERR 128
 
 ; --- common tails ------------------------------------------------------------

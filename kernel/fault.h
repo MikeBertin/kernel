@@ -1,4 +1,4 @@
-// kernel/fault.h — a recoverable page-fault handler.
+// kernel/fault.h: a recoverable page-fault handler.
 #ifndef FAULT_H
 #define FAULT_H
 

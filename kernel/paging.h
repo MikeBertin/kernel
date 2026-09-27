@@ -1,4 +1,4 @@
-// kernel/paging.h — virtual memory via x86 two-level paging.
+// kernel/paging.h: virtual memory via x86 two-level paging.
 //
 // With paging on, every address the CPU touches is *virtual*: the MMU walks a
 // page directory -> page table to find the real physical frame. We identity-map

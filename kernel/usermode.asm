@@ -1,11 +1,11 @@
-; kernel/gdt.asm — load the GDT/TSS and drop to ring 3.
+; kernel/gdt.asm: load the GDT/TSS and drop to ring 3.
 
 [bits 32]
 global gdt_flush
 global tss_flush
 global enter_usermode
 
-; gdt_flush(uint32_t gdt_ptr) — install the GDT and reload every segment.
+; gdt_flush(uint32_t gdt_ptr): install the GDT and reload every segment.
 gdt_flush:
     mov eax, [esp + 4]
     lgdt [eax]
@@ -19,13 +19,13 @@ gdt_flush:
 .reload_cs:
     ret
 
-; tss_flush() — load the task register with the TSS selector (0x28).
+; tss_flush(): load the task register with the TSS selector (0x28).
 tss_flush:
     mov ax, 0x28
     ltr ax
     ret
 
-; enter_usermode(uint32_t eip, uint32_t esp) — build an iret frame that returns
+; enter_usermode(uint32_t eip, uint32_t esp): build an iret frame that returns
 ; into ring 3. iret is the only way to lower the privilege level.
 enter_usermode:
     mov eax, [esp + 4]   ; user entry point

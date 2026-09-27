@@ -1,4 +1,4 @@
-// kernel/idt.c — build and load the IDT.
+// kernel/idt.c: build and load the IDT.
 #include "idt.h"
 #include "isr.h"
 
@@ -80,7 +80,7 @@ void idt_install(void) {
     idt_set_gate(47, (uint32_t)irq15, KCODE, GATE);
 
     // int 0x80 syscall gate. 0xEE = present, DPL 3 (callable from ring 3),
-    // 32-bit interrupt gate — the deliberate doorway for userspace.
+    // 32-bit interrupt gate: the deliberate doorway for userspace.
     idt_set_gate(0x80, (uint32_t)isr128, KCODE, 0xEE);
 
     idt_flush((uint32_t)&idtp);

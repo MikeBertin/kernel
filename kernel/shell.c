@@ -1,8 +1,8 @@
-// kernel/shell.c — a ring-3 shell.
+// kernel/shell.c: a ring-3 shell.
 //
 // Everything here runs unprivileged. It cannot call kernel functions or touch
 // hardware directly; its only channel to the kernel is `int 0x80`. The thin
-// wrappers below are the entire interface — read a key, write output, etc.
+// wrappers below are the entire interface: read a key, write output, etc.
 #include "shell.h"
 #include "syscall.h"
 
@@ -63,8 +63,8 @@ static void run(const char *line) {
         s_putc('\n');
     } else if (streq(line, "poke")) {
         // Deliberately reach past our sandbox: write to VGA memory (0xB8000),
-        // a kernel-only page. In ring 3 this page-faults — the kernel catches
-        // it, "kills" us, and restarts the shell. Real memory protection.
+        // a kernel-only page. In ring 3 this page-faults; the kernel catches
+        // it, "kills" us and restarts the shell. Real memory protection.
         s_write("writing directly to kernel memory (0xB8000)...\n");
         *(volatile unsigned int *)0xB8000 = 0x2F212F21;
         s_write("...if you can read this, protection failed.\n");
@@ -98,7 +98,7 @@ void user_shell(void) {
 // has its own address space: the counter lives at the same virtual address
 // (0xB0000004) in every process yet is backed by a different physical frame, so
 // they never interfere. It bumps its private counter, then asks the kernel to
-// report it (which also prints the physical frame — the proof of isolation).
+// report it (which also prints the physical frame, the proof of isolation).
 void user_worker(void) {
     volatile uint32_t *counter = (volatile uint32_t *)0xB0000004;
     for (;;) {

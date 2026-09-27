@@ -1,4 +1,4 @@
-// kernel/gdt.h — rebuild the GDT in C with user-mode segments and a TSS.
+// kernel/gdt.h: rebuild the GDT in C with user-mode segments and a TSS.
 //
 // The boot sector's GDT only had ring-0 code/data. To run code in ring 3 we
 // need ring-3 segments and a Task State Segment: when a ring-3 program traps

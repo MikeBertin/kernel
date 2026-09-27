@@ -1,4 +1,4 @@
-// kernel/string.c — freestanding memory helpers.
+// kernel/string.c: freestanding memory helpers.
 #include "string.h"
 
 void *memset(void *dst, int c, size_t n) {

@@ -1,4 +1,4 @@
-// kernel/heap.h — a simple kernel heap (kmalloc / kfree).
+// kernel/heap.h: a simple kernel heap (kmalloc / kfree).
 //
 // A first-fit allocator over a fixed arena. Each block carries a small header;
 // kmalloc splits a big free block, kfree marks it free and coalesces with the

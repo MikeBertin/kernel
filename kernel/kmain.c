@@ -1,9 +1,9 @@
-// kernel/kmain.c — the kernel's C entry point.
+// kernel/kmain.c: the kernel's C entry point.
 //
 // The whole stack, bottom to top: protected mode (M1), interrupts (M2), memory
 // management (M3), pre-emptive multitasking (M4), userspace + syscalls (M5),
 // real memory protection (M5.1), several *isolated* user processes running at
-// once (M5.2), and an interactive ring-3 shell as one of them (M5.3).
+// once (M5.2) and an interactive ring-3 shell as one of them (M5.3).
 #include "vga.h"
 #include "gdt.h"
 #include "idt.h"

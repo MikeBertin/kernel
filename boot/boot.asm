@@ -1,4 +1,4 @@
-; boot/boot.asm — Stage 1 boot sector (Milestone 1)
+; boot/boot.asm: Stage 1 boot sector (Milestone 1)
 ;
 ; The BIOS gives us 512 bytes and 16-bit real mode. That is not enough room
 ; for a real kernel, so stage 1's job grows: it must (1) load the C kernel off
@@ -6,7 +6,7 @@
 ; the CPU into 32-bit protected mode, then (4) hand control to the kernel.
 ;
 ; After the far jump into protected mode there is no going back to BIOS
-; services — from that point the machine is entirely ours.
+; services. From that point the machine is entirely ours.
 
 [bits 16]
 [org 0x7C00]
@@ -15,7 +15,7 @@ KERNEL_OFFSET   equ 0x10000     ; physical address we load the kernel to (64 KiB
 KERNEL_SECTORS  equ 48          ; how many 512-byte sectors of kernel to read
 
 boot_start:
-    mov [BOOT_DRIVE], dl        ; BIOS leaves the boot drive number in DL — save it
+    mov [BOOT_DRIVE], dl        ; BIOS leaves the boot drive number in DL; save it
 
     cli
     xor ax, ax
@@ -28,7 +28,7 @@ boot_start:
     ; Explicitly set VGA text mode 3 (80x25, 16 colour) via the video BIOS.
     ; We must do this in real mode, before the protected-mode switch, because
     ; it needs int 0x10. It guarantees the VGA registers are programmed so that
-    ; 0xB8000 is the live text buffer — some BIOSes (e.g. v86's) don't do this
+    ; 0xB8000 is the live text buffer. Some BIOSes (e.g. v86's) don't do this
     ; for us, and our kernel writes straight to 0xB8000 assuming mode 3.
     mov ax, 0x0003
     int 0x10
@@ -38,7 +38,7 @@ boot_start:
 
     call load_kernel          ; disk -> 0x10000
     call enable_a20
-    call switch_to_pm         ; installs GDT, sets PE, far-jumps — never returns
+    call switch_to_pm         ; installs GDT, sets PE, far-jumps, never returns
 
     jmp $                     ; unreachable
 
@@ -46,7 +46,7 @@ boot_start:
 ; Real-mode helpers
 ; -----------------------------------------------------------------------------
 
-; print_string — NUL-terminated string at DS:SI, via BIOS teletype
+; print_string: NUL-terminated string at DS:SI, via BIOS teletype
 print_string:
     mov ah, 0x0E
 .loop:
@@ -58,7 +58,7 @@ print_string:
 .done:
     ret
 
-; load_kernel — read KERNEL_SECTORS sectors starting at sector 2 into 0x10000.
+; load_kernel: read KERNEL_SECTORS sectors starting at sector 2 into 0x10000.
 ; BIOS int 0x13, AH=0x02 reads CHS sectors into ES:BX.
 load_kernel:
     mov si, MSG_LOAD
@@ -84,7 +84,7 @@ load_kernel:
     call print_string
     jmp $
 
-; enable_a20 — the "fast A20" gate via system control port 0x92. Without this,
+; enable_a20: the "fast A20" gate via system control port 0x92. Without this,
 ; address line 20 is masked and memory wraps at 1 MiB (an 8086 compatibility
 ; wart we have to switch off before touching high memory).
 enable_a20:
@@ -93,7 +93,7 @@ enable_a20:
     out 0x92, al
     ret
 
-; switch_to_pm — load the GDT, set the protection-enable bit, far-jump to flush
+; switch_to_pm: load the GDT, set the protection-enable bit, far-jump to flush
 ; the prefetch pipeline and load a 32-bit code selector into CS.
 switch_to_pm:
     cli                      ; no interrupts: we have no 32-bit IDT yet (that's M2)
@@ -123,7 +123,7 @@ init_pm:
     jmp KERNEL_OFFSET        ; into the kernel's 32-bit entry stub
 
 ; -----------------------------------------------------------------------------
-; Global Descriptor Table — the classic "flat" model: two overlapping segments
+; Global Descriptor Table. The classic "flat" model: two overlapping segments
 ; (code + data) each covering the whole 4 GiB address space. Segmentation
 ; effectively becomes a no-op so we can think in flat physical addresses.
 ; -----------------------------------------------------------------------------

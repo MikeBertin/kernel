@@ -1,4 +1,4 @@
-// kernel/heap.c — first-fit heap with splitting and coalescing.
+// kernel/heap.c: first-fit heap with splitting and coalescing.
 #include "heap.h"
 #include <stdint.h>
 

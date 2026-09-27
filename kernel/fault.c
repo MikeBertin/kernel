@@ -1,4 +1,4 @@
-// kernel/fault.c — page-fault handler.
+// kernel/fault.c: page-fault handler.
 //
 // Reports the faulting address (CR2) and whether the fault came from a user
 // process (ring 3) or the kernel (ring 0). If the shell was the culprit (its

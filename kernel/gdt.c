@@ -1,4 +1,4 @@
-// kernel/gdt.c — GDT with kernel + user segments and a TSS.
+// kernel/gdt.c: GDT with kernel + user segments and a TSS.
 #include "gdt.h"
 #include "string.h"
 #include <stdint.h>
@@ -17,8 +17,8 @@ struct gdt_ptr {
     uint32_t base;
 } __attribute__((packed));
 
-// The 32-bit Task State Segment. We only really use ss0/esp0 — the ring-0 stack
-// the CPU switches to on a trap from ring 3 — but the layout must be exact.
+// The 32-bit Task State Segment. We only really use ss0/esp0 (the ring-0 stack
+// the CPU switches to on a trap from ring 3), but the layout must be exact.
 struct tss_entry {
     uint32_t prev;
     uint32_t esp0, ss0;

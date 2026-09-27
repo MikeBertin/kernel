@@ -1,4 +1,4 @@
-// kernel/io.h — x86 port I/O primitives.
+// kernel/io.h: x86 port I/O primitives.
 //
 // Devices like the PIC, PIT and keyboard controller live in a separate "I/O
 // address space" reached with the in/out instructions rather than memory
@@ -18,7 +18,7 @@ static inline uint8_t inb(uint16_t port) {
     return ret;
 }
 
-// A short, harmless write to an unused port — gives slow devices (the PIC) a
+// A short, harmless write to an unused port. Gives slow devices (the PIC) a
 // moment to settle between commands.
 static inline void io_wait(void) {
     outb(0x80, 0);

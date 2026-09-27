@@ -1,9 +1,9 @@
-// kernel/syscall.h — the system-call boundary.
+// kernel/syscall.h: the system-call boundary.
 //
 // A syscall is the one guarded doorway from an unprivileged program into the
 // kernel. Ring-3 code puts a call number in EAX (and args in EBX/ECX/...) and
-// executes `int 0x80`; the CPU jumps — via a gate we deliberately made callable
-// from ring 3 — into the kernel, which does the privileged work on its behalf.
+// executes `int 0x80`; the CPU jumps (via a gate we deliberately made callable
+// from ring 3) into the kernel, which does the privileged work on its behalf.
 #ifndef SYSCALL_H
 #define SYSCALL_H
 

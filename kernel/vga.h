@@ -1,7 +1,7 @@
-// kernel/vga.h — minimal VGA text-mode driver.
+// kernel/vga.h: minimal VGA text-mode driver.
 //
 // In text mode the screen is memory-mapped: 80x25 cells starting at physical
-// 0xB8000, two bytes per cell — an ASCII byte and an attribute byte (fg/bg
+// 0xB8000, two bytes per cell: an ASCII byte and an attribute byte (fg/bg
 // colour). Writing there puts characters on screen directly. No BIOS, no
 // driver stack; just memory.
 #ifndef VGA_H
@@ -24,7 +24,7 @@ void vga_puts(const char *s);                 // NUL-terminated string
 void vga_put_dec(uint32_t n);                 // unsigned decimal at the cursor
 void vga_put_hex(uint32_t n);                 // 0x-prefixed hex at the cursor
 
-// Positioned write that does not disturb the streaming cursor — used for
+// Positioned write that does not disturb the streaming cursor. Used for
 // status readouts like the uptime clock.
 void vga_puts_at(size_t row, size_t col, const char *s);
 void vga_set_cursor(size_t row, size_t col);   // move the streaming cursor

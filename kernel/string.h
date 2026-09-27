@@ -1,4 +1,4 @@
-// kernel/string.h — the handful of freestanding memory helpers we need.
+// kernel/string.h: the handful of freestanding memory helpers we need.
 // (gcc may also emit implicit calls to memset/memcpy, so these must exist.)
 #ifndef STRING_H
 #define STRING_H

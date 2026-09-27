@@ -1,4 +1,4 @@
-// kernel/keyboard.c — translate IRQ1 scancodes and buffer them for readers.
+// kernel/keyboard.c: translate IRQ1 scancodes and buffer them for readers.
 #include "keyboard.h"
 #include "isr.h"
 #include "io.h"
@@ -21,7 +21,7 @@ static volatile int  khead, ktail;
 static void keyboard_callback(registers_t *r) {
     (void)r;
     uint8_t scancode = inb(KBD_DATA);
-    if (scancode & 0x80) return;                 // key release — ignore
+    if (scancode & 0x80) return;                 // key release: ignore
 
     char c = scancode_ascii[scancode & 0x7F];
     if (!c) return;

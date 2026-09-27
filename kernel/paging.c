@@ -1,4 +1,4 @@
-// kernel/paging.c — set up and drive the MMU, incl. per-process address spaces.
+// kernel/paging.c: set up and drive the MMU, incl. per-process address spaces.
 #include "paging.h"
 #include "pmm.h"
 #include "string.h"
@@ -20,7 +20,7 @@ static inline void invlpg(uint32_t virt) {
 
 // Map one 4 KiB page into a *specific* page directory, allocating a page table
 // for the region on demand. Works on any directory as long as the currently
-// active CR3 identity-maps low memory (where page tables live) — true during
+// active CR3 identity-maps low memory (where page tables live). True during
 // setup, since every directory shares the kernel's identity map.
 void map_page_in(uint32_t *pd, uint32_t virt, uint32_t phys, uint32_t flags) {
     uint32_t pd_index = virt >> 22;

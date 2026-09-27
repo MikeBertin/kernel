@@ -1,7 +1,7 @@
 name: Deploy demo to GitHub Pages
 
-# Publishes the web/ folder — the live in-browser boot (v86) plus the
-# annotated-code walkthrough — to GitHub Pages on every push to main.
+# Publishes the web/ folder (the live in-browser boot via v86 plus the
+# annotated-code walkthrough) to GitHub Pages on every push to main.
 
 on:
   push:

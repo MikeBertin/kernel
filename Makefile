@@ -1,4 +1,4 @@
-# KERNEL — Makefile
+# KERNEL: Makefile
 #
 # Build the disk image as: [ boot sector | C kernel ], where the boot sector
 # loads the kernel off disk and switches to 32-bit protected mode before
@@ -39,7 +39,7 @@ all: $(IMAGE)
 # Stage the built image into web/ so the v86 in-browser boot serves the latest.
 web: $(IMAGE)
 	cp $(IMAGE) web/os-image.bin
-	@echo "staged web/os-image.bin — serve web/ (see .claude/launch.json)"
+	@echo "staged web/os-image.bin; serve web/ (see .claude/launch.json)"
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -71,7 +71,7 @@ $(KERNEL): $(KOBJ) linker.ld
 # --- final image: boot sector at sector 0, kernel from sector 1 ---
 # Pad to 1 MiB (2048 sectors). A tiny disk yields 0 cylinders under standard
 # 16x63 CHS geometry, which some BIOSes (notably v86's SeaBIOS) reject as
-# unbootable — 1 MiB gives valid geometry while staying trivially small.
+# unbootable. 1 MiB gives valid geometry while staying trivially small.
 $(IMAGE): $(BOOT) $(KERNEL)
 	dd if=/dev/zero of=$@ bs=512 count=2048 2>/dev/null
 	dd if=$(BOOT)   of=$@ conv=notrunc 2>/dev/null

@@ -1,4 +1,4 @@
-// kernel/vga.c — VGA text-mode driver implementation.
+// kernel/vga.c: VGA text-mode driver implementation.
 #include "vga.h"
 #include "io.h"
 
