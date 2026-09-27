@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KERNEL: a from-scratch x86 OS you can boot in your browser</title>
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="badge.svg" type="image/svg+xml">
 <meta name="description" content="A complete x86 operating system written from scratch in C and assembly, from boot sector to isolated userspace processes, booting live in your browser.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="KERNEL: an x86 OS from scratch, booting in your browser">
@@ -203,6 +203,15 @@
   footer { margin:56px 0 0; color:var(--muted); font-size:12.5px; line-height:1.7;
     border-top:1px solid var(--border); padding-top:22px; }
   footer a { color:var(--accent); }
+  footer .hub { display:inline-flex; align-items:center; gap:6px; }
+  footer .hub img { display:block; }
+
+  /* reduced motion: no smooth scroll, no pulses, no tweens; reveals start revealed */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior:auto; }
+    *, *::before, *::after { animation:none !important; transition:none !important; }
+    .step, .diagram { opacity:1 !important; transform:none !important; }
+  }
 
   /* ── responsive ── */
   @media (max-width:900px) {
@@ -611,6 +620,7 @@ static char s_read(void) {
         address space, booting live in your browser.<br>
         Built by hand in C and x86 assembly. No Linux, no libraries underneath.
         &nbsp;·&nbsp; <a href="https://github.com/MikeBertin/kernel">Source on GitHub →</a>
+        <br><span class="hub"><img src="badge.svg" alt="" width="13" height="16"> <a href="https://mikebertin.github.io/">More builds by Mike Bertin</a></span>
       </footer>
     </main>
   </div>
@@ -730,7 +740,7 @@ static char s_read(void) {
       if (emulator.screen_adapter && emulator.screen_adapter.init) { try { emulator.screen_adapter.init(); } catch(e){} }
     };
     new IntersectionObserver(([e]) => setMini(!e.isIntersecting), { threshold: 0 }).observe(heroTerm);
-    mini.onclick = () => scrollTo({ top: 0, behavior: "smooth" });
+    mini.onclick = () => scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 
     // ── lightweight syntax highlighter for the code excerpts ──
     const KEYWORDS = /\b(void|int|char|uint\d*_t|size_t|static|inline|struct|return|for|if|while|asm|volatile|mov|jmp|call|cli|lgdt|or|cmp|times|db|dw|equ|push|pop|ret)\b/g;

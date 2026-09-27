@@ -62,12 +62,21 @@ demo).
 - 32-bit i686, freestanding C (`-ffreestanding`, no standard library) + NASM assembly.
 - Built with an `i686-elf` cross-compiler; runs identically on QEMU and v86.
 
-## Why build this?
+## Why KERNEL
 
 To remove the last abstraction. Writing an OS by hand is the way to actually
 understand what a process is, what memory management costs, why a context switch is expensive and what a system call really does: not as concepts, but as code
 you can point at. The aim was to end up with no black boxes left below the C.
 
+The name is the plainest one going. The kernel is the core of an operating
+system: the one program that runs with full privilege, and the one every other
+program has to ask for help. The word comes from the Old English *cyrnel*, a
+small seed, which suits a project that grows a whole machine from 512 bytes.
+
 ## License
 
 [MIT](LICENSE): do whatever you like with it.
+
+---
+
+<sub>Part of a collection of interactive builds · [mikebertin.github.io](https://mikebertin.github.io/)</sub>
